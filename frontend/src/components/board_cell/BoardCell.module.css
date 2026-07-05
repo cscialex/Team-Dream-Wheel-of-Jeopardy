@@ -1,0 +1,30 @@
+.cell {
+  cursor: pointer;
+  background-color: #060ce9;
+  color: #ffcc00;
+  font-family: Impact, "Arial Narrow", sans-serif;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  vertical-align: middle;
+  padding: 24px 8px;
+  border: 3px solid #000;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  user-select: none;
+}
+
+.cell:hover {
+  background-color: #1e24ff;
+  transform: scale(1.03);
+}
+
+.cell:active {
+  transform: scale(0.98);
+}
+
+.cellAnswered {
+  background-color: #000a3d;
+  color: #333;
+  cursor: default;
+  pointer-events: none;
+}
