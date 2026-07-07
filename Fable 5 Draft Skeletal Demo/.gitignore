@@ -1,0 +1,5 @@
+# Auto-created and seeded on first run — each machine generates its own
+repository/questions.sqlite
+
+.DS_Store
+node_modules/

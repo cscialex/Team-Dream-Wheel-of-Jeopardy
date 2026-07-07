@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wheel of Jeopardy — Skeletal Increment Comms Console</title>
+  <link rel="stylesheet" href="/ui/demo.css" />
+</head>
+<body>
+  <header>
+    <h1>Wheel of Jeopardy — Subsystem Communications Console</h1>
+    <p class="subtitle">
+      SKELETAL increment demo. This is <strong>not a game screen</strong> — it demonstrates the
+      architecture: SS-01 UI &harr; SS-02 Game Logic &harr; SS-03 Repository &harr; SQLite file.
+      All replies are canned stubs per the SRS §6 message contracts.
+    </p>
+    <p id="connection-status" class="status disconnected">Connecting to Game Logic&hellip;</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>1 &mdash; Send an SRS §6.1 message (UI &rarr; GL)</h2>
+      <label for="message-type">Message type (13 per SRS §6.1)</label>
+      <select id="message-type"></select>
+      <label for="message-payload">Payload (editable JSON, pre-filled with the SRS example)</label>
+      <textarea id="message-payload" rows="8" spellcheck="false"></textarea>
+      <button id="send-message">Send message</button>
+    </section>
+
+    <section class="panel">
+      <h2>2 &mdash; Free-text chat (UI &rarr; GL &rarr; UI)</h2>
+      <div class="row">
+        <input id="chat-text" type="text" placeholder="Type any text and send it to Game Logic&hellip;" />
+        <button id="send-chat">Send chat</button>
+      </div>
+
+      <h2>3 &mdash; Repository round trip (UI &rarr; GL &rarr; Repo &rarr; SQLite &rarr; back)</h2>
+      <button id="repo-roundtrip">Read categories from the SQLite file</button>
+      <div id="repo-rows"></div>
+    </section>
+
+    <section class="panel wide">
+      <h2>4 &mdash; Invoke an SRS §6.3 repository call (GL &rarr; Repo &rarr; back)</h2>
+      <label for="repo-call-name">Call (10 per SRS §6.3 &mdash; only getAllCategories reads the real SQLite file; the rest are stubs returning canned data)</label>
+      <select id="repo-call-name"></select>
+      <label for="repo-call-args">Arguments (editable JSON array, in signature order, pre-filled with the SRS example)</label>
+      <textarea id="repo-call-args" rows="4" spellcheck="false"></textarea>
+      <button id="invoke-repo-call">Invoke via Game Logic</button>
+      <pre id="repo-call-result" hidden></pre>
+    </section>
+
+    <section class="panel wide">
+      <h2>Live message log</h2>
+      <div id="message-log" aria-live="polite"></div>
+      <button id="clear-log" class="secondary">Clear log</button>
+    </section>
+  </main>
+
+  <script src="/shared/messages.js"></script>
+  <script src="/ui/demo.js"></script>
+</body>
+</html>

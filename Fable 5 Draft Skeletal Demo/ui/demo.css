@@ -1,0 +1,108 @@
+/* Plain styling for the skeletal comms console. Not a game screen. */
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 1rem 1.5rem;
+  background: #f4f5f7;
+  color: #1c1e21;
+}
+
+header h1 { margin: 0 0 0.25rem; font-size: 1.4rem; }
+.subtitle { margin: 0 0 0.5rem; color: #555; max-width: 60rem; }
+
+.status { font-weight: 600; margin: 0 0 1rem; }
+.status.connected { color: #1a7f37; }
+.status.disconnected { color: #b42318; }
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #d0d4da;
+  border-radius: 8px;
+  padding: 1rem;
+}
+.panel.wide { grid-column: 1 / -1; }
+.panel h2 { margin: 0 0 0.75rem; font-size: 1.05rem; }
+.panel h2 + h2, .panel .row + h2 { margin-top: 1.25rem; }
+
+label { display: block; margin: 0.5rem 0 0.25rem; font-size: 0.85rem; color: #444; }
+
+select, textarea, input[type="text"] {
+  width: 100%;
+  padding: 0.45rem;
+  border: 1px solid #b6bcc5;
+  border-radius: 6px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+textarea { resize: vertical; }
+
+button {
+  margin-top: 0.6rem;
+  padding: 0.45rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #1f6feb;
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+button:hover { background: #175cd3; }
+button.secondary { background: #6b7280; }
+
+.row { display: flex; gap: 0.5rem; align-items: flex-end; }
+.row input { flex: 1; }
+.row button { margin-top: 0; }
+
+#message-log {
+  height: 320px;
+  overflow-y: auto;
+  background: #0d1117;
+  color: #e6edf3;
+  border-radius: 6px;
+  padding: 0.5rem;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.log-entry { white-space: pre-wrap; word-break: break-word; margin-bottom: 0.35rem; }
+.log-entry .timestamp { color: #8b949e; }
+.log-entry .direction-out { color: #f0b429; font-weight: 700; }
+.log-entry .direction-in { color: #3fb950; font-weight: 700; }
+.log-entry .direction-repo-out { color: #d2a8ff; font-weight: 700; }
+.log-entry .direction-repo-in { color: #76e3ea; font-weight: 700; }
+.log-entry .msg-type { color: #79c0ff; font-weight: 700; }
+
+#repo-rows table {
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  width: 100%;
+  font-size: 0.82rem;
+}
+#repo-rows th, #repo-rows td {
+  border: 1px solid #d0d4da;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+#repo-rows th { background: #eef1f5; }
+
+#repo-call-result {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem;
+  background: #f6f8fa;
+  border: 1px solid #d0d4da;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
