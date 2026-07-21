@@ -1,0 +1,31 @@
+.wheelWrapper {
+	position: relative;
+	width: 200px;
+	height: 200px;
+}
+
+.wheel {
+	width: 200px;
+	height: 200px;
+	border-radius: 50%;
+	border: 6px solid var(--color-gold);
+	position: relative;
+	transition: transform 3s cubic-bezier(0.17, 0.67, 0.2, 1);
+}
+
+.wheelLabel {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 70px;
+	text-align: center;
+	color: var(--color-white);
+	
+	font-size: 9px;
+	font-weight: bolder;
+	text-transform: uppercase;
+}
+
+.buttonStyle {
+
+}
