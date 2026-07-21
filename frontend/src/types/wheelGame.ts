@@ -17,7 +17,8 @@ export interface Cell {
 	answered: boolean;
 }
 
-export interface WheelPlayer {
+export interface Player {
+	id: number;
 	name: string;
 	score: number;
 	tokens: number;

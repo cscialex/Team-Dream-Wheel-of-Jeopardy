@@ -3,7 +3,7 @@ import Typography from "@mui/material/Typography";
 
 import styles from "./GameScreen.module.css";
 import {
-  type WheelPlayer,
+  type Player,
   type Cell,
   makeBoard,
   valuesForRound,
@@ -13,6 +13,7 @@ import {
 
 import { QuestionBoard } from "./question-board/QuestionBoard";
 import WheelComponent from "./wheel-component/WheelComponent";
+import TopBar from "../../top-bar/TopBar";
 
 export type GameScreenProps = {
   playerCount?: 2 | 3 | 4;
@@ -20,12 +21,13 @@ export type GameScreenProps = {
 }
 
 type GameState = {
-  players: WheelPlayer[];
+  players: Player[];
   currentPlayerIndex: number;
   round: 1 | 2;
   spinsRemaining: number;
   board: Cell[][];
   activeCategory: number | null;
+  announcer: "";
 }
 
 function initialState(
@@ -34,6 +36,7 @@ function initialState(
 ): GameState {
   return {
     players: Array.from({ length: playerCount }, (_, i) => ({
+      id: i,
       name: `Player ${i + 1}`,
       score: 0,
       tokens: 0,
@@ -43,6 +46,7 @@ function initialState(
     spinsRemaining: spinsPerRound,
     board: makeBoard(valuesForRound(1)),
     activeCategory: null,
+    announcer: ""
   };
 }
 
@@ -61,6 +65,7 @@ export function GameScreen({
     state.board[category].some((cell) => !cell.answered);
 
   const handleSpin = () => {
+
     console.log("TODO: Spin");
   };
 
@@ -79,29 +84,12 @@ export function GameScreen({
 
   return (
     <div className={styles.layout}>
-      <div className={styles.topBar}>
-        <div className={styles.topBarLeft}>
-          <Typography>Round {state.round}</Typography>
-          <Typography>Spins Left: {state.spinsRemaining}</Typography>
-        </div>
-
-        <div className={styles.scoreboard}>
-          {state.players.map((player) => (
-            <div key={player.name}>
-              <Typography>{player.name}</Typography>
-              <Typography>Score: {player.score}</Typography>
-              <Typography>Tokens: {player.tokens}</Typography>
-            </div>
-          ))}
-        </div>
-      </div>
+      <TopBar announcerText={state.announcer} players={state.players} currentRound={state.round} spinsLeft={state.spinsRemaining} />
 
       <div className={styles.mainRow}>
         <WheelComponent
           sectors={SECTORS}
           canSpin
-          isSpinning={false}
-          onSpin={handleSpin}
         />
 
         <QuestionBoard

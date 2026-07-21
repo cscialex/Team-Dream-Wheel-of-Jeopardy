@@ -1,31 +1,43 @@
-.wheelWrapper {
+.layout {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
 	position: relative;
-	width: 200px;
-	height: 200px;
 }
 
-.wheel {
-	width: 200px;
-	height: 200px;
-	border-radius: 50%;
-	border: 6px solid var(--color-gold);
-	position: relative;
-	transition: transform 3s cubic-bezier(0.17, 0.67, 0.2, 1);
-}
-
-.wheelLabel {
+.trianglePointer {
 	position: absolute;
-	top: 50%;
+	top: -5px;
 	left: 50%;
-	width: 70px;
-	text-align: center;
-	color: var(--color-white);
-	
-	font-size: 9px;
-	font-weight: bolder;
-	text-transform: uppercase;
+	transform: translateX(-50%);
+	width: 20px;
+	height: 20px;
+	background-color: var(--color-gold-light);
+	clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+	z-index: 1;
 }
 
-.buttonStyle {
+.wheelWrapper {
+	flex: 1;
+}
 
+.sectorLabel {
+	text-align: center;
+	font-size: 5px;
+	overflow-wrap: break-word;
+	font-weight: bold;
+	color: var(--color-white);
+}
+
+.buttonWrapper {
+	display: flex;
+	margin: auto;
+}
+
+.spinButton {
+	width: 200px;
+	background: #FFD447;
+	background: radial-gradient(circle, rgba(255, 212, 71, 1) 0%, rgba(255, 217, 98, 1) 50%, rgba(222, 184, 61, 1) 100%);
+	color: var(--color-navy-900) !important;
+	font-weight: bold !important;
 }

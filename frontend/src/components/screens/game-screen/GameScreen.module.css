@@ -11,16 +11,6 @@
 	position: relative;
 }
 
-.topBar {
-	width: 100%;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
-	margin-bottom: 14px;
-	flex-wrap: wrap;
-}
-
 .topBarLeft {
 	display: flex;
 	align-items: center;
