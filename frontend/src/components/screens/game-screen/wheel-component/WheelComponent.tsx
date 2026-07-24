@@ -3,6 +3,7 @@ import type { Sector } from "../../../../types/wheelGame";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { arc } from "d3-shape";
 import Button from "@mui/material/Button";
+import useGameStore from "../../../../store/gameStore";
 
 const SPIN_DURATION_MS = 4000;
 const NUM_SPINS = 4;
@@ -16,10 +17,12 @@ export default function WheelComponent({
   sectors,
   canSpin,
 }: WheelComponentProps) {
+  const isSpinning = useGameStore((s) => s.isSpinning);
+  const setIsSpinning = useGameStore((s) => s.setSpinning);
+  const setSpinResult = useGameStore((s) => s.setSpinResult);
+
   const [rotation, setRotation] = useState<number>(0);
-  const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const sectorSize = 360 / sectors.length;
-  const [result, setResult] = useState<Sector | null>(null);
   const spinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // svg settings
@@ -33,6 +36,8 @@ export default function WheelComponent({
     const toRadians = (numDegrees: number) => (numDegrees * Math.PI) / 180;
 
     return pathGenerator({
+      innerRadius: 0,
+      outerRadius: wheelCenter - 10,
       startAngle: toRadians(startAngle),
       endAngle: toRadians(endAngle),
     });
@@ -62,13 +67,12 @@ export default function WheelComponent({
         Math.floor(pointerAngle / sectorSize) % wheelSectors.length;
       const landedSector = wheelSectors[landedIndex];
 
-      setResult(landedSector);
+      setSpinResult(landedSector);
       setIsSpinning(false);
-      console.log("Landed on: ", landedSector);
     }, SPIN_DURATION_MS);
   };
 
-//   Cleanup for the spin timeout ref
+  //   Cleanup for the spin timeout ref
   useEffect(() => {
     return () => {
       if (spinTimeoutRef.current) clearTimeout(spinTimeoutRef.current);
