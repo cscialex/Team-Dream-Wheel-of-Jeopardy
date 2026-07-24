@@ -1,6 +1,6 @@
 import { Typography } from "@mui/material";
 import styles from "./TopBar.module.css";
-import type { Player } from "../../types/wheelGame";
+import type { Player } from "../../types/wheelOfJeopardy";
 import Chip from "@mui/material/Chip";
 
 type TopBarProps = {

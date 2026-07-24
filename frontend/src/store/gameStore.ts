@@ -5,75 +5,60 @@ import {
   type Sector,
   makeBoard,
   valuesForRound,
-} from "../types/wheelGame";
+} from "../types/wheelOfJeopardy";
+import gameSocket from "../gameSocket";
 
-type GameStore = {
-  players: Player[];
-  currentPlayerIndex: number;
-  round: 1 | 2;
-  spinsRemaining: number;
-  board: Cell[][];
-  activeCategory: number | null;
-  announcer: string;
+type GamePhase = "setup" | "playing" | "gameOver";
 
-  // Wheel states
-  isSpinning: boolean;
-  spinResult: Sector | null;
+type GameState = {
+    players: Player[];
+    isSpinning: boolean;
+    spinResult: Sector | null;
+    phase: GamePhase;
+    currentPlayerIndex: number;
+    round: 1 | 2;
+    spinsRemaining: number;
+    board: Cell[][];
+    activeCategory: number | null;
+    announcer: string;
 
-  initGame: (playerCount: number, spinsPerRound: number) => void;
-  setSpinning: (spinning: boolean) => void;
-  setSpinResult: (sector: Sector | null) => void;
-  selectCategory: (category: number) => void;
-  selectCell: (category: number, row: number) => void;
+    join: (name: string) => void;
+    startGame: () => void;
+    endGame: () => void;
+
+    setPhase: (phase: GamePhase) => void;
+    selectCategory: (category: number) => void;
+    selectCell: (category: number, row: number) => void;
+    applyServerState: (state: Partial<GameState>) => void;
 };
 
-const useGameStore = create<GameStore>()((set) => ({
-  players: [
-    { id: 0, name: "Player 1", score: 0, tokens: 0 },
-    { id: 1, name: "Player 2", score: 0, tokens: 0 },
-  ],
-  currentPlayerIndex: 0,
-  round: 1,
-  spinsRemaining: 30,
-  board: makeBoard(valuesForRound(1)),
-  activeCategory: null,
-  announcer: "",
+const useGameStore = create<GameState>()((set) => ({
+    players: [],
+    isSpinning: false,
+    spinResult: null,
+    phase: "setup",
+    currentPlayerIndex: 0,
+    round: 1,
+    spinsRemaining: 30,
+    board: makeBoard(valuesForRound(1)),
+    activeCategory: null,
+    announcer: "",
 
-  isSpinning: false,
-  spinResult: null,
+    join: (name) => gameSocket.emit("join", { name }),
 
-  initGame: (playerCount, spinsPerRound) =>
-    set(() => ({
-      players: Array.from({ length: playerCount }, (_, idx) => ({
-        id: idx,
-        name: `Player ${idx + 1}`,
-        score: 0,
-        tokens: 0,
-      })),
+    startGame: () => gameSocket.emit("startGame", {}),
 
-      round: 1,
-      spinsRemaining: spinsPerRound,
-      board: makeBoard(valuesForRound(1)),
-    })),
+    endGame: () => gameSocket.emit("endGame", {}),
 
-  setSpinning: (spinning) => set(() => ({ isSpinning: spinning })),
+    setPhase: (phase) => set(() => ({ phase })),
 
-  setSpinResult: (sector) => set(() => ({ spinResult: sector })),
+    selectCategory: (category) => gameSocket.emit("selectCategory", { category }),
 
-  selectCategory: (category) => set(() => ({ activeCategory: category })),
+    selectCell: (category, row) => gameSocket.emit("selectCell", { category, row }),
 
-  selectCell: (category, row) =>
-    set((state) => {
-      const board = state.board.map((col, idx) =>
-        idx === category
-          ? col.map((cell, j) =>
-              j === row ? { ...cell, answered: true } : cell,
-            )
-          : col,
-      );
-
-      return { board };
-    }),
+    applyServerState: (state: Partial<GameState>) => set(state),
 }));
+
+gameSocket.on("state", (state) => useGameStore.getState().applyServerState(state));
 
 export default useGameStore;

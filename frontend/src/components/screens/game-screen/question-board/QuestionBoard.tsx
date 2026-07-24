@@ -1,4 +1,4 @@
-import type { Cell } from "../../../../types/wheelGame";
+import type { Cell } from "../../../../types/wheelOfJeopardy";
 import styles from "./QuestionBoard.module.css";
 
 export interface QuestionBoardProps {

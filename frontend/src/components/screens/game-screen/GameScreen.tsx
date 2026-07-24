@@ -1,11 +1,9 @@
-import { useEffect } from "react";
-
 import styles from "./GameScreen.module.css";
 import {
   valuesForRound,
   CATEGORIES,
   SECTORS,
-} from "../../../types/wheelGame";
+} from "../../../types/wheelOfJeopardy";
 
 import { QuestionBoard } from "./question-board/QuestionBoard";
 import WheelComponent from "./wheel-component/WheelComponent";
@@ -20,7 +18,6 @@ export function GameScreen() {
   const board = useGameStore((s) => s.board);
   const activeCategory = useGameStore((s) => s.activeCategory);
 
-  const initGame = useGameStore((s) => s.initGame);
   const handleSelectCategory = useGameStore((s) => s.selectCategory);
   const handleSelectCell = useGameStore((s) => s.selectCell);
 
@@ -29,11 +26,6 @@ export function GameScreen() {
   // checking if a category in the board has some unanswered question
   const hasUnanswered = (category: number): boolean =>
     board[category]?.some((cell) => !cell.answered) ?? false;
-
-  useEffect(() => {
-    // Initialize game on first render
-    initGame(2, 30); // Passed in through setup screen later
-  }, [])
 
   return (
     <div className={styles.layout}>

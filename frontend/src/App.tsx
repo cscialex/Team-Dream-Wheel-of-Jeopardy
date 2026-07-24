@@ -1,4 +1,6 @@
 import { GameScreen } from "./components/screens/game-screen/GameScreen";
+import SetupScreen from "./components/screens/setup-screen/SetupScreen";
+import useGameStore from "./store/gameStore";
 
 /**
  * App switches the page rendered based on the phase in the data store.
@@ -7,7 +9,18 @@ import { GameScreen } from "./components/screens/game-screen/GameScreen";
  * @returns Screens dependent on game phase
  */
 function App() {
-	return <GameScreen />
+	const phase = useGameStore((s) => s.phase);
+
+	switch (phase) {
+		case "setup":
+			return <SetupScreen />
+		case "playing":
+			return <GameScreen />
+		case "gameOver":
+			return <SetupScreen />
+		default:
+			throw new Error("Invalid phase provided");
+	}
 }
 
 export default App

@@ -25,6 +25,7 @@
 	--color-dark-red: #7f1d1d;
 	--color-white: #fff;
 
+	--font-color: #030518;
   /* Anton is used to mimic the Jeopardy font */
 	--font-jeopardy: "Anton", sans-serif;
 	--font-body: "Inter", system-ui, sans-serif;

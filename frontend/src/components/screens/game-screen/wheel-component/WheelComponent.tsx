@@ -1,9 +1,10 @@
 import styles from "./WheelComponent.module.css";
-import type { Sector } from "../../../../types/wheelGame";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { Sector } from "../../../../types/wheelOfJeopardy";
+import { useMemo, useRef, useState } from "react";
 import { arc } from "d3-shape";
 import Button from "@mui/material/Button";
 import useGameStore from "../../../../store/gameStore";
+import gameSocket from "../../../../gameSocket";
 
 const SPIN_DURATION_MS = 4000;
 const NUM_SPINS = 4;
@@ -18,8 +19,6 @@ export default function WheelComponent({
   canSpin,
 }: WheelComponentProps) {
   const isSpinning = useGameStore((s) => s.isSpinning);
-  const setIsSpinning = useGameStore((s) => s.setSpinning);
-  const setSpinResult = useGameStore((s) => s.setSpinResult);
 
   const [rotation, setRotation] = useState<number>(0);
   const sectorSize = 360 / sectors.length;
@@ -52,32 +51,35 @@ export default function WheelComponent({
   const handleSpin = () => {
     if (isSpinning || !canSpin) return;
 
-    setIsSpinning(true);
+    gameSocket.emit("spin");
+
+    // The backend will resolve the sector
+    // setIsSpinning(true);
 
     const randomOffset = Math.random() * 360;
     const sectorTargetRotation = rotation + NUM_SPINS * 360 + randomOffset;
 
     setRotation(sectorTargetRotation);
 
-    spinTimeoutRef.current = setTimeout(() => {
-      // Strip the target rotation of the additional 360s from NumSpins
-      const normalizedAngle = ((sectorTargetRotation % 360) + 360) % 360;
-      const pointerAngle = (360 - normalizedAngle + 360) % 360;
-      const landedIndex =
-        Math.floor(pointerAngle / sectorSize) % wheelSectors.length;
-      const landedSector = wheelSectors[landedIndex];
+    // spinTimeoutRef.current = setTimeout(() => {
+    //   // Strip the target rotation of the additional 360s from NumSpins
+    //   const normalizedAngle = ((sectorTargetRotation % 360) + 360) % 360;
+    //   const pointerAngle = (360 - normalizedAngle + 360) % 360;
+    //   const landedIndex =
+    //     Math.floor(pointerAngle / sectorSize) % wheelSectors.length;
+    //   const landedSector = wheelSectors[landedIndex];
 
-      setSpinResult(landedSector);
-      setIsSpinning(false);
-    }, SPIN_DURATION_MS);
+    //   setSpinResult(landedSector);
+    //   setIsSpinning(false);
+    // }, SPIN_DURATION_MS);
   };
 
   //   Cleanup for the spin timeout ref
-  useEffect(() => {
-    return () => {
-      if (spinTimeoutRef.current) clearTimeout(spinTimeoutRef.current);
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     if (spinTimeoutRef.current) clearTimeout(spinTimeoutRef.current);
+  //   };
+  // }, []);
 
   return (
     <div className={styles.layout}>
