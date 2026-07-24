@@ -22,8 +22,8 @@ const GL_TO_UI = {
   ANSWER_RESULT:            'ANSWER_RESULT',            // {correct, pointValue, updatedScore, announcerText}
   PROMPT_TOKEN_REDEMPTION:  'PROMPT_TOKEN_REDEMPTION',  // {tokensHeld, announcerText}
   TURN_CHANGED:             'TURN_CHANGED',             // {newActivePlayerIndex, announcerText}
-  ROUND_END:                'ROUND_END',                // {roundScores: [{name, score}], nextRound?}
-  GAME_OVER:                'GAME_OVER',                // {finalRanking: [{name, total}], winnerName}
+  ROUND_END:                'ROUND_END',                // {roundScores: [{name, score}]}
+  GAME_OVER:                'GAME_OVER',                // {finalRanking: [{name, total}], winners: players[]}
   ERROR:                    'ERROR',                    // {code, message}
   ADMIN_OP_RESULT:          'ADMIN_OP_RESULT',          // {success, message}
 };

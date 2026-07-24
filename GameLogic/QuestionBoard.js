@@ -4,12 +4,15 @@ import Question from './Question';
 export default class QuestionBoard
 {
     cells = [];
+    cats = [];
     categoryIndices;
 
     index = 0;
 
     constructor(categories, round)
     {
+        this.cats = categories;
+        
         categories.foreach((c) => {
             categoryIndices[c] = index;
             index = index + 1;
