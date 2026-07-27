@@ -1,0 +1,97 @@
+.topBar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 0px;
+    max-width: 1400px;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+.playerRow {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.playerName {
+    color: var(--color-white);
+}
+
+.chipGroup {
+    display: flex;
+    gap: 6px;
+}
+
+.spinsLeftChip {
+    align-self: center;
+    background-color: var(--color-navy-500) !important;
+    border: 2px solid var(--color-navy-border) !important;
+    border-radius: 8px;
+    color: var(--color-blue-pale) !important;
+}
+
+.scoreChip {
+    background-color: var(--color-gold) !important;
+    color: var(--color-navy-900) !important;
+    font-weight: 600 !important;
+}
+
+.playerColumn {
+    margin-left: auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
+    min-width: 140px;
+}
+
+.playerCard {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    background-color: var(--color-navy-700);
+    border: 2px solid var(--color-navy-border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-blue-pale);
+}
+
+
+.announcer {
+    flex: 1;
+    background-color: var(--color-blue-dim);
+    border-radius: 8px;
+    border: 2px solid var(--color-navy-border);
+    width: 100%;
+    padding: 12px 24px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.roundBadge {
+    align-self: center;
+    color: var(--color-gold);
+}
+
+.tokenChip {
+    background-color: var(--color-navy-700) !important;
+    color: var(--color-white) !important;
+    border: 2px solid var(--color-navy-border) !important;
+}
+
+.announcerLabel {
+    color: var(--color-gold) !important;
+    margin-bottom: 2px !important;
+}
