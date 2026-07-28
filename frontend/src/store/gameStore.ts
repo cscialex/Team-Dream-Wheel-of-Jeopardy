@@ -22,6 +22,7 @@ type GameState = {
     activeCategory: number | null;
     announcer: string;
     awaiting: "spin" | "categorySelect" | "questionSelect" | "answerSelect" | null;
+    tokenRedemption: boolean;
     currentQuestion: {
       questionText: string;
       answers: { answerId: number; answerText: string }[];
@@ -37,6 +38,7 @@ type GameState = {
     selectCategory: (category: number) => void;
     selectCell: (category: number, row: number) => void;
     selectAnswer: (answerId: number) => void;
+    redeemToken: (redeem: string) => void;
     applyServerState: (state: Partial<GameState>) => void;
 };
 
@@ -52,6 +54,7 @@ const useGameStore = create<GameState>()((set) => ({
     activeCategory: null,
     announcer: "",
     awaiting: null,
+    tokenRedemption: false,
     currentQuestion: null,
 
     join: (name) => gameSocket.emit("join", { name }),
@@ -67,6 +70,8 @@ const useGameStore = create<GameState>()((set) => ({
     selectCell: (category, row) => gameSocket.emit("selectCell", { category, row }),
 
     selectAnswer: (answerId) => gameSocket.emit("selectAnswer", { answerId }),
+
+    redeemToken: (redeem) => gameSocket.emit("redeemToken", { redeem }),
 
     applyServerState: (state: Partial<GameState>) => set(state),
 }));

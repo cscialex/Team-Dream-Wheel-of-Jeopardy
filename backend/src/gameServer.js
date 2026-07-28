@@ -7,7 +7,6 @@ import QuestionRepository from "./questionRepository.js";
 const APP_ORIGIN = process.env.APP_ORIGIN ?? "http://localhost:5173";
 const PORT = Number(process.env.PORT ?? 4000);
 const SPIN_DURATION_MS = 4000;
-const NUM_SPINS = 30;
 const ROUND1_VALUES = [100, 200, 300, 400, 500];
 const ROUND2_VALUES = [200, 400, 600, 800, 1000];
 const CAT_COLORS = [
@@ -48,7 +47,7 @@ const gameState = {
   phase: "setup",
   currentPlayerIndex: 0,
   round: 1,
-  spinsRemaining: NUM_SPINS,
+  spinsRemaining: 30,
   board: makeBoard(ROUND1_VALUES),
   activeCategory: null,
   announcer: "Waiting for players to join.",
@@ -156,7 +155,7 @@ function handleStartGame() {
 
   gameState.phase = "playing";
   gameState.round = 1;
-  gameState.spinsRemaining = NUM_SPINS;
+  gameState.spinsRemaining = 30;
   gameState.board = makeBoard(ROUND1_VALUES);
   gameState.activeCategory = null;
   gameState.currentQuestion = null;
@@ -199,8 +198,9 @@ function handleSelectCell({ category, row } = {}) {
   }
 
   const categoryId = categories[category].categoryId;
-  const basePointValue = gameState.round === 1 ? ROUND1_VALUES[row] : ROUND2_VALUES[row];
-  const question = repository.getQuestionForCategoryAndValue(categoryId, basePointValue);
+  //const basePointValue = gameState.round === 1 ? ROUND1_VALUES[row] : ROUND2_VALUES[row];
+  const basePointValue = ROUND1_VALUES[row]; // same either way
+  const question = repository.getQuestionForCategoryAndValue(categoryId, basePointValue, gameState.round); // this is where round handling comes in
 
   if (!question) {
     gameState.announcer = "No question was found for that board cell.";
@@ -224,16 +224,20 @@ function handleSelectAnswer( {answerId} = {} ) {
 
     const ansMatch = dbQ?.answers.find(a => a.answerId === answerId);
     const correct = ansMatch?.isCorrect;
-    const playerName = gameState.players[gameState.currentPlayerIndex].name;
 
     if(correct) {
-      p.score += q.pointValue * gameState.round; // TODO - add round
-      gameState.announcer = `${playerName} got the question correct!`;
+      p.score += q.pointValue;
+      gameState.announcer = `${p.name} got the question correct!`;
     }
     else {
-      p.score -= q.pointValue * gameState.round; // TODO - add round
-      gameState.announcer = `${playerName} got the question incorrect!`;
-      // TODO - token redemption
+      p.score -= q.pointValue;
+      gameState.announcer = `${p.name} got the question incorrect!`;
+      if(p.tokens > 0) {
+        gameState.tokenRedemption = true; // prompt token redemption
+      }
+      else {
+        advanceTurn();
+      }
     }
   }
   else {
@@ -244,7 +248,20 @@ function handleSelectAnswer( {answerId} = {} ) {
 
   gameState.currentQuestion = null;
   gameState.awaiting = "spin";
-  advanceTurn();
+  emitState();
+}
+
+function handleTokenRedemption ({redeem} = {}) {
+  const p = gameState.players[gameState.currentPlayerIndex];
+  if(redeem=="Yes") {
+    p.tokens -= 1;
+    gameState.announcer = `${p.name}, spin again!`;
+    gameState.awaiting = "spin";
+  }
+  else {
+    advanceTurn();
+  }
+  gameState.tokenRedemption = false;
   emitState();
 }
 
@@ -281,16 +298,12 @@ function resolveSector(sector) {
 
   switch (sector.type) {
     case "category":
-      const categoryCol = gameState.board[sector.catIndex];
-      if (categoryCol.some((cell) => cell.answered === false)) {
-        gameState.activeCategory = sector.catIndex ?? null;
-        gameState.announcer = `${currentPlayer.name} landed on ${sector.label}. Select a question.`;
+      gameState.activeCategory = sector.catIndex ?? null;
+      gameState.announcer = `${currentPlayer.name} landed on ${sector.label}. Select a question.`;
+      if(gameState.board[gameState.activeCategory].every(question => question.answered))
+        gameState.announcer = `All category questions answered in ${sector.label}. ${currentPlayer.name}, please spin again.`;
+      else {
         gameState.awaiting = "questionSelect";
-      } else {
-        // We need some better way to handle resolving a category when the spin lands on one that is empty
-        gameState.activeCategory = null;
-        gameState.announcer = `${sector.label} is fully answered. ${currentPlayer.name}, choose another category.`;
-        gameState.awaiting = "categorySelect";
       }
       break;
 
@@ -314,6 +327,7 @@ function resolveSector(sector) {
     case "loseTurn":
       if (currentPlayer.tokens > 0) {
         gameState.announcer = `${currentPlayer.name} landed on Lose Turn and has a Free Spin token available.`;
+        gameState.tokenRedemption = true; // prompt token redemption
       } else {
         gameState.announcer = `${currentPlayer.name} lost a turn.`;
         advanceTurn();
@@ -332,14 +346,14 @@ function resolveSector(sector) {
   }
 
   if (gameState.spinsRemaining <= 0) {
-      if (gameState.round === 1) {
-        // Advance only if no spins remaining and round = 1
-        advanceRound();
-      } else {
-        // In round 2, if no spins are remaining, game over.
-        gameState.phase = "gameOver";
-        gameState.announcer = "No spins remain. Game over.";
-      }
+    if (gameState.round === 1) {
+      // Advance only if no spins remaining and round = 1
+      advanceRound();
+    } else {
+      // In round 2, if no spins are remaining, game over.
+      gameState.phase = "gameOver";
+      gameState.announcer = "No spins remain. Game over.";
+    }
   }
 }
 
@@ -347,7 +361,7 @@ function advanceRound() {
   gameState.phase = "playing";
   gameState.round = 2;
   gameState.announcer = "Round 1 complete! Now onto Round 2.";
-  gameState.spinsRemaining = NUM_SPINS;
+  gameState.spinsRemaining = 30;
   gameState.board = makeBoard(ROUND2_VALUES);
   gameState.activeCategory = null;
   gameState.currentQuestion = null;
@@ -401,6 +415,7 @@ gameServer.on("connection", (socket) => {
   socket.on("selectCell", handleSelectCell);
   socket.on("spin", handleSpin);
   socket.on("selectAnswer", handleSelectAnswer);
+  socket.on("redeemToken", handleTokenRedemption);
 
   socket.on("disconnect", () => {
     console.log("Client disconnected with socket.id:", socket.id);

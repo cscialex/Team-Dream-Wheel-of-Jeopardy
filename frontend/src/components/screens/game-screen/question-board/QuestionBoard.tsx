@@ -9,12 +9,16 @@ export interface QuestionBoardProps {
 	pickingCategory: boolean;
 	pickingQuestion: boolean;
 	questionText: string;
+	tokenText: string;
+	yesNo: string[];
+	tokenRedemption: boolean;
 	answers: {answerId: number; answerText: string}[];
 	answering: boolean;
 	hasUnanswered: (catIdx: number) => boolean;
 	onSelectCategory: (catIdx: number) => void;
 	onSelectCell: (catIdx: number, rowIdx: number) => void;
 	onSelectAnswer: (answerId: number) => void;
+	onTokenRedemption: (redeem: string) => void;
 }
 
 export function QuestionBoard({
@@ -25,12 +29,16 @@ export function QuestionBoard({
 	pickingCategory,
 	pickingQuestion,
 	questionText,
+	yesNo,
+	tokenRedemption,
+	tokenText,
 	answers,
 	answering,
 	hasUnanswered,
 	onSelectCategory,
 	onSelectCell,
-	onSelectAnswer
+	onSelectAnswer,
+	onTokenRedemption
 }: QuestionBoardProps) {
 	return (
 		<div className={styles.boardWrapper}>
@@ -76,19 +84,35 @@ export function QuestionBoard({
 			</div>
 			{answers.length > 0 && (
 				<div className={styles.ansWrapper}>
-				<p className={styles.questionText}>{questionText}</p>
-				<div className={styles.ansGrid}>
-					{answers.map((answer) => (
-						<button
-							key={answer.answerId}
-							className={styles.answer}
-							onClick={() => onSelectAnswer(answer.answerId)}
-						>
-							{answer.answerText}
-						</button>
-					))}
+					<p className={styles.questionText}>{questionText}</p>
+					<div className={styles.ansGrid}>
+						{answers.map((answer) => (
+							<button
+								key={answer.answerId}
+								className={styles.answer}
+								onClick={() => onSelectAnswer(answer.answerId)}
+							>
+								{answer.answerText}
+							</button>
+						))}
+					</div>
 				</div>
-			</div>
+			)}
+			{tokenRedemption && 
+				(<div className={styles.tokenWrapper}>
+					<p className={styles.tokenText}>{tokenText}</p>
+					<div className={styles.tokenGrid}>
+						{yesNo.map((redeemOption) => (
+							<button 
+								key={redeemOption}
+								className={styles.token}
+								onClick={() => onTokenRedemption(redeemOption)}
+							>
+								{redeemOption}
+							</button>
+						))}
+					</div>
+				</div>
 			)}
 		</div>
 	);

@@ -19,10 +19,14 @@ export function GameScreen() {
   const activeCategory = useGameStore((s) => s.activeCategory);
   const awaiting = useGameStore((s) => s.awaiting);
   const currentQuestion = useGameStore((s) => s.currentQuestion);
+  const tokenRedemption = useGameStore((s) => s.tokenRedemption);
 
   const handleSelectCategory = useGameStore((s) => s.selectCategory);
   const handleSelectCell = useGameStore((s) => s.selectCell);
   const handleSelectAnswer = useGameStore((s) => s.selectAnswer);
+  const handleTokenRedemption = useGameStore((s) => s.redeemToken);
+  const tokenText = "Would you like to redeem a token?";
+  const yesNo = ["Yes", "No"];
 
   const values = valuesForRound(round);
 
@@ -50,12 +54,16 @@ export function GameScreen() {
           pickingCategory={awaiting === "categorySelect"}
           pickingQuestion={awaiting === "questionSelect"}
           questionText={currentQuestion?.questionText ?? ""}
+          tokenText={tokenText}
+          yesNo={yesNo}
+          tokenRedemption={tokenRedemption}
           answers={currentQuestion?.answers ?? []}
           answering={awaiting === "answerSelect"}
           hasUnanswered={hasUnanswered}
           onSelectCategory={handleSelectCategory}
           onSelectCell={handleSelectCell}
           onSelectAnswer={handleSelectAnswer}
+          onTokenRedemption={handleTokenRedemption}
         />
       </div>
     </div>
