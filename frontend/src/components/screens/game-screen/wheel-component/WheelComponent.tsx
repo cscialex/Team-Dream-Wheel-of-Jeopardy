@@ -19,6 +19,7 @@ export default function WheelComponent({
   canSpin,
 }: WheelComponentProps) {
   const isSpinning = useGameStore((s) => s.isSpinning);
+  const awaitingSpin = useGameStore((s) => s.awaiting === "spin");
 
   const [rotation, setRotation] = useState<number>(0);
   const sectorSize = 360 / sectors.length;
@@ -134,7 +135,7 @@ export default function WheelComponent({
       <div className={styles.buttonWrapper}>
         <Button
           className={styles.spinButton}
-          disabled={isSpinning || !canSpin}
+          disabled={isSpinning || !canSpin || !awaitingSpin}
           onClick={handleSpin}
         >
           {isSpinning ? "Spinning..." : "Spin"}

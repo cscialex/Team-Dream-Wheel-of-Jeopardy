@@ -7,7 +7,9 @@ import QuestionRepository from "./questionRepository.js";
 const APP_ORIGIN = process.env.APP_ORIGIN ?? "http://localhost:5173";
 const PORT = Number(process.env.PORT ?? 4000);
 const SPIN_DURATION_MS = 4000;
+const NUM_SPINS = 30;
 const ROUND1_VALUES = [100, 200, 300, 400, 500];
+const ROUND2_VALUES = [200, 400, 600, 800, 1000];
 const CAT_COLORS = [
   "var(--color-blue)",
   "var(--color-red)",
@@ -46,8 +48,8 @@ const gameState = {
   phase: "setup",
   currentPlayerIndex: 0,
   round: 1,
-  spinsRemaining: 30,
-  board: makeBoard(),
+  spinsRemaining: NUM_SPINS,
+  board: makeBoard(ROUND1_VALUES),
   activeCategory: null,
   announcer: "Waiting for players to join.",
   isSpinning: false,
@@ -154,8 +156,8 @@ function handleStartGame() {
 
   gameState.phase = "playing";
   gameState.round = 1;
-  gameState.spinsRemaining = 30;
-  gameState.board = makeBoard();
+  gameState.spinsRemaining = NUM_SPINS;
+  gameState.board = makeBoard(ROUND1_VALUES);
   gameState.activeCategory = null;
   gameState.currentQuestion = null;
   gameState.awaiting = "spin";
@@ -197,7 +199,7 @@ function handleSelectCell({ category, row } = {}) {
   }
 
   const categoryId = categories[category].categoryId;
-  const basePointValue = ROUND1_VALUES[row];
+  const basePointValue = gameState.round === 1 ? ROUND1_VALUES[row] : ROUND2_VALUES[row];
   const question = repository.getQuestionForCategoryAndValue(categoryId, basePointValue);
 
   if (!question) {
@@ -222,14 +224,15 @@ function handleSelectAnswer( {answerId} = {} ) {
 
     const ansMatch = dbQ?.answers.find(a => a.answerId === answerId);
     const correct = ansMatch?.isCorrect;
+    const playerName = gameState.players[gameState.currentPlayerIndex].name;
 
     if(correct) {
       p.score += q.pointValue * gameState.round; // TODO - add round
-      gameState.announcer = `${gameState.players[gameState.currentPlayerIndex]} got the question correct!`;
+      gameState.announcer = `${playerName} got the question correct!`;
     }
     else {
       p.score -= q.pointValue * gameState.round; // TODO - add round
-      gameState.announcer = `${gameState.players[gameState.currentPlayerIndex]} got the question incorrect!`;
+      gameState.announcer = `${playerName} got the question incorrect!`;
       // TODO - token redemption
     }
   }
@@ -278,9 +281,17 @@ function resolveSector(sector) {
 
   switch (sector.type) {
     case "category":
-      gameState.activeCategory = sector.catIndex ?? null;
-      gameState.announcer = `${currentPlayer.name} landed on ${sector.label}. Select a question.`;
-      gameState.awaiting = "questionSelect";
+      const categoryCol = gameState.board[sector.catIndex];
+      if (categoryCol.some((cell) => cell.answered === false)) {
+        gameState.activeCategory = sector.catIndex ?? null;
+        gameState.announcer = `${currentPlayer.name} landed on ${sector.label}. Select a question.`;
+        gameState.awaiting = "questionSelect";
+      } else {
+        // We need some better way to handle resolving a category when the spin lands on one that is empty
+        gameState.activeCategory = null;
+        gameState.announcer = `${sector.label} is fully answered. ${currentPlayer.name}, choose another category.`;
+        gameState.awaiting = "categorySelect";
+      }
       break;
 
     case "playersChoice":
@@ -321,9 +332,27 @@ function resolveSector(sector) {
   }
 
   if (gameState.spinsRemaining <= 0) {
-    gameState.phase = "gameOver";
-    gameState.announcer = "No spins remain. Game over.";
+      if (gameState.round === 1) {
+        // Advance only if no spins remaining and round = 1
+        advanceRound();
+      } else {
+        // In round 2, if no spins are remaining, game over.
+        gameState.phase = "gameOver";
+        gameState.announcer = "No spins remain. Game over.";
+      }
   }
+}
+
+function advanceRound() {
+  gameState.phase = "playing";
+  gameState.round = 2;
+  gameState.announcer = "Round 1 complete! Now onto Round 2.";
+  gameState.spinsRemaining = NUM_SPINS;
+  gameState.board = makeBoard(ROUND2_VALUES);
+  gameState.activeCategory = null;
+  gameState.currentQuestion = null;
+  gameState.awaiting = "spin";
+  emitState();
 }
 
 function advanceTurn() {
@@ -331,12 +360,12 @@ function advanceTurn() {
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
 }
 
-function makeBoard() {
-  return categoryLabels.map(() => ROUND1_VALUES.map(() => ({ answered: false })));
+function makeBoard(roundValues) {
+  return categoryLabels.map(() => roundValues.map(() => ({ answered: false })));
 }
 
 function valuesForRound(round) {
-  return round === 1 ? ROUND1_VALUES : ROUND1_VALUES.map((value) => value * 2);
+  return round === 1 ? ROUND1_VALUES : ROUND2_VALUES;
 }
 
 function isValidCategoryIndex(category) {
