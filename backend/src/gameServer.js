@@ -165,8 +165,11 @@ function handleStartGame() {
 }
 
 function handleEndGame() {
-  gameState.phase = "gameOver";
-  gameState.announcer = "Game over.";
+  //gameState.phase = "gameOver";
+  const gamePlayers = gameState.players;
+  const maxScore = Math.max(...gamePlayers.map(player => player.score));
+  const winnerNames = gamePlayers.filter(player => player.score == maxScore).map(player => player.name).join(", ");
+  gameState.announcer = `Game over. Player(s) ${winnerNames} win!`;
   emitState();
 }
 
@@ -228,6 +231,7 @@ function handleSelectAnswer( {answerId} = {} ) {
     if(correct) {
       p.score += q.pointValue;
       gameState.announcer = `${p.name} got the question correct!`;
+      gameState.awaiting = "spin";
     }
     else {
       p.score -= q.pointValue;
@@ -236,6 +240,7 @@ function handleSelectAnswer( {answerId} = {} ) {
         gameState.tokenRedemption = true; // prompt token redemption
       }
       else {
+        gameState.awaiting = "spin";
         advanceTurn();
       }
     }
@@ -247,7 +252,7 @@ function handleSelectAnswer( {answerId} = {} ) {
   }
 
   gameState.currentQuestion = null;
-  gameState.awaiting = "spin";
+  noSpinsCheck();
   emitState();
 }
 
@@ -257,8 +262,10 @@ function handleTokenRedemption ({redeem} = {}) {
     p.tokens -= 1;
     gameState.announcer = `${p.name}, spin again!`;
     gameState.awaiting = "spin";
+    noSpinsCheck();
   }
   else {
+    gameState.awaiting = "spin";
     advanceTurn();
   }
   gameState.tokenRedemption = false;
@@ -284,6 +291,7 @@ function handleSpin() {
     gameState.spinsRemaining -= 1;
 
     resolveSector(sector);
+
     emitState();
   }, SPIN_DURATION_MS);
 }
@@ -300,8 +308,10 @@ function resolveSector(sector) {
     case "category":
       gameState.activeCategory = sector.catIndex ?? null;
       gameState.announcer = `${currentPlayer.name} landed on ${sector.label}. Select a question.`;
-      if(gameState.board[gameState.activeCategory].every(question => question.answered))
+      if(gameState.board[gameState.activeCategory].every(question => question.answered)) {
         gameState.announcer = `All category questions answered in ${sector.label}. ${currentPlayer.name}, please spin again.`;
+        noSpinsCheck();
+      }
       else {
         gameState.awaiting = "questionSelect";
       }
@@ -322,6 +332,7 @@ function resolveSector(sector) {
     case "freeSpin":
       currentPlayer.tokens += 1;
       gameState.announcer = `${currentPlayer.name} earned a Free Spin token and may spin again.`;
+      noSpinsCheck();
       break;
 
     case "loseTurn":
@@ -342,18 +353,8 @@ function resolveSector(sector) {
 
     default:
       gameState.announcer = "Unknown wheel result.";
+      noSpinsCheck();
       break;
-  }
-
-  if (gameState.spinsRemaining <= 0) {
-    if (gameState.round === 1) {
-      // Advance only if no spins remaining and round = 1
-      advanceRound();
-    } else {
-      // In round 2, if no spins are remaining, game over.
-      gameState.phase = "gameOver";
-      gameState.announcer = "No spins remain. Game over.";
-    }
   }
 }
 
@@ -369,9 +370,23 @@ function advanceRound() {
   emitState();
 }
 
+function noSpinsCheck() {
+  if (gameState.spinsRemaining <= 0) {
+    if (gameState.round === 1) {
+      // Advance only if no spins remaining and round = 1
+      advanceRound();
+    } else {
+      // In round 2, if no spins are remaining, game over.
+      //gameState.phase = "gameOver";
+      handleEndGame();
+    }
+  }
+}
+
 function advanceTurn() {
   if (gameState.players.length === 0) return;
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+  noSpinsCheck();
 }
 
 function makeBoard(roundValues) {
