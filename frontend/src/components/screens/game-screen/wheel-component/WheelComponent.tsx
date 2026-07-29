@@ -1,6 +1,6 @@
 import styles from "./WheelComponent.module.css";
 import type { Sector } from "../../../../types/wheelOfJeopardy";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { arc } from "d3-shape";
 import Button from "@mui/material/Button";
 import useGameStore from "../../../../store/gameStore";
@@ -52,35 +52,28 @@ export default function WheelComponent({
   const handleSpin = () => {
     if (isSpinning || !canSpin) return;
 
-    gameSocket.emit("spin");
+    gameSocket.emit("spin", (sector: Sector) => {
+      const landedIdx = wheelSectors.findIndex((s) => s.label === sector.label && s.type === sector.type);
 
-    // The backend will resolve the sector
-    // setIsSpinning(true);
+      const randomRotationWithinSector = Math.random() * sectorSize;
 
-    // const randomOffset = Math.random() * 360;
-    // const sectorTargetRotation = rotation + NUM_SPINS * 360 + randomOffset;
+      const targetAngle = (landedIdx * sectorSize) + randomRotationWithinSector;
+      const targetNormalizedAngle = (360 - targetAngle + 360) % 360;
 
-    // setRotation(sectorTargetRotation);
+      const currentNormalizedAngle = ((rotation % 360) + 360) % 360;
+      let offset = targetNormalizedAngle - currentNormalizedAngle;
+      if (offset < 0) offset += 360;
 
-    // spinTimeoutRef.current = setTimeout(() => {
-    //   // Strip the target rotation of the additional 360s from NumSpins
-    //   const normalizedAngle = ((sectorTargetRotation % 360) + 360) % 360;
-    //   const pointerAngle = (360 - normalizedAngle + 360) % 360;
-    //   const landedIndex =
-    //     Math.floor(pointerAngle / sectorSize) % wheelSectors.length;
-    //   const landedSector = wheelSectors[landedIndex];
-
-    //   setSpinResult(landedSector);
-    //   setIsSpinning(false);
-    // }, SPIN_DURATION_MS);
+      setRotation(rotation + NUM_SPINS * 360 + offset);
+    });
   };
 
-  //   Cleanup for the spin timeout ref
-  // useEffect(() => {
-  //   return () => {
-  //     if (spinTimeoutRef.current) clearTimeout(spinTimeoutRef.current);
-  //   };
-  // }, []);
+  // Cleanup for the spin timeout ref
+  useEffect(() => {
+    return () => {
+      if (spinTimeoutRef.current) clearTimeout(spinTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <div className={styles.layout}>

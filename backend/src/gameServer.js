@@ -272,7 +272,7 @@ function handleTokenRedemption ({redeem} = {}) {
   emitState();
 }
 
-function handleSpin() {
+function handleSpin(callback) {
   if (gameState.phase !== "playing" || gameState.isSpinning || gameState.spinsRemaining <= 0) {
     return;
   }
@@ -281,17 +281,18 @@ function handleSpin() {
   gameState.spinResult = null;
   gameState.currentQuestion = null;
   gameState.announcer = "Wheel spinning...";
-  emitState();
+
+  const sector = SECTORS[Math.floor(Math.random() * SECTORS.length)];
+  resolveSector(sector);
+
+  if (typeof(callback) === "function") {
+    callback(sector);
+  }
 
   setTimeout(() => {
-    const sector = SECTORS[Math.floor(Math.random() * SECTORS.length)];
-
     gameState.isSpinning = false;
     gameState.spinResult = sector;
     gameState.spinsRemaining -= 1;
-
-    resolveSector(sector);
-
     emitState();
   }, SPIN_DURATION_MS);
 }
@@ -428,7 +429,7 @@ gameServer.on("connection", (socket) => {
   socket.on("endGame", handleEndGame);
   socket.on("selectCategory", handleSelectCategory);
   socket.on("selectCell", handleSelectCell);
-  socket.on("spin", handleSpin);
+  socket.on("spin", (callback) => handleSpin(callback));
   socket.on("selectAnswer", handleSelectAnswer);
   socket.on("redeemToken", handleTokenRedemption);
 
