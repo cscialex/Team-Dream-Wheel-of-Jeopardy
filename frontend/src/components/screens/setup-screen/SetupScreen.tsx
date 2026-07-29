@@ -1,9 +1,8 @@
-import { useEffect, useState, type InputEvent } from "react";
+import { useEffect, useState } from "react";
 import styles from "./SetupScreen.module.css";
 import useGameStore from "../../../store/gameStore";
 import { Button, List, ListItem, TextField, Typography } from "@mui/material";
 
-const PLAYER_COLORS = ["var(--color-blue)", "var(--color-red)", "var(--color-green)", "var(--color-purple)"];
 
 function GlowingHeader() {
     const [bulbCount, setBulbCount] = useState(25);

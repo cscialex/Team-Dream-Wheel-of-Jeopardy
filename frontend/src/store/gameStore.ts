@@ -38,7 +38,7 @@ type GameState = {
     selectCategory: (category: number) => void;
     selectCell: (category: number, row: number) => void;
     selectAnswer: (answerId: number) => void;
-    redeemToken: (redeem: string) => void;
+    redeemToken: (redeem: boolean) => void;
     applyServerState: (state: Partial<GameState>) => void;
 };
 

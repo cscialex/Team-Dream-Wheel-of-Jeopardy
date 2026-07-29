@@ -258,7 +258,7 @@ function handleSelectAnswer( {answerId} = {} ) {
 
 function handleTokenRedemption ({redeem} = {}) {
   const p = gameState.players[gameState.currentPlayerIndex];
-  if(redeem=="Yes") {
+  if(redeem == true) {
     p.tokens -= 1;
     gameState.announcer = `${p.name}, spin again!`;
     gameState.awaiting = "spin";

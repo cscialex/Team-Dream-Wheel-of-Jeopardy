@@ -18,7 +18,7 @@ export interface QuestionBoardProps {
 	onSelectCategory: (catIdx: number) => void;
 	onSelectCell: (catIdx: number, rowIdx: number) => void;
 	onSelectAnswer: (answerId: number) => void;
-	onTokenRedemption: (redeem: string) => void;
+	onTokenRedemption: (redeem: boolean) => void;
 }
 
 export function QuestionBoard({
@@ -106,7 +106,7 @@ export function QuestionBoard({
 							<button 
 								key={redeemOption}
 								className={styles.token}
-								onClick={() => onTokenRedemption(redeemOption)}
+								onClick={() => onTokenRedemption(true)}
 							>
 								{redeemOption}
 							</button>
