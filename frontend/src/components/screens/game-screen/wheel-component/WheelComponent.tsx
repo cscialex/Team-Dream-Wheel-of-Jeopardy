@@ -57,10 +57,10 @@ export default function WheelComponent({
     // The backend will resolve the sector
     // setIsSpinning(true);
 
-    const randomOffset = Math.random() * 360;
-    const sectorTargetRotation = rotation + NUM_SPINS * 360 + randomOffset;
+    // const randomOffset = Math.random() * 360;
+    // const sectorTargetRotation = rotation + NUM_SPINS * 360 + randomOffset;
 
-    setRotation(sectorTargetRotation);
+    // setRotation(sectorTargetRotation);
 
     // spinTimeoutRef.current = setTimeout(() => {
     //   // Strip the target rotation of the additional 360s from NumSpins
