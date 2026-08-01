@@ -106,7 +106,7 @@ export function QuestionBoard({
 							<button 
 								key={redeemOption}
 								className={styles.token}
-								onClick={() => onTokenRedemption(true)}
+								onClick={() => onTokenRedemption(redeemOption === "yes")}
 							>
 								{redeemOption}
 							</button>

@@ -22,6 +22,7 @@ export interface Player {
 	name: string;
 	score: number;
 	tokens: number;
+	socketId: string;
 }
 
 export const CATEGORIES = ["Science", "History", "Movies & TV", "Geography", "Sports", "Music"];

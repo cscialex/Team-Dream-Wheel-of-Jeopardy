@@ -54,7 +54,7 @@ const gameState = {
   isSpinning: false,
   spinResult: null,
   currentQuestion: null,
-  awaiting: null // "spin" | "categorySelect" | "questionSelect" | "answerSelect" | null
+  awaiting: null // "spin" | "categorySelect" | "oppCategorySelect" | "questionSelect" | "answerSelect" | null
 };
 
 const app = express();
@@ -116,7 +116,10 @@ function emitState() {
   gameServer.emit("state", gameState);
 }
 
-function handleJoin({ name } = {}) {
+function handleJoin({ name } = {}, socket) {
+  console.log("Player Name: ", name);
+  console.log("SocketId: ", socket.id);
+
   const cleanName = name?.trim();
   if (!cleanName) return;
 
@@ -126,13 +129,18 @@ function handleJoin({ name } = {}) {
     return;
   }
 
+  console.log("SocketId: ", socket.id);
+
+  const socketId = socket.id;
+
   const player = {
     id: gameState.players.length,
     name: cleanName,
     score: 0,
     tokens: 0,
+    socketId: socketId
   };
-
+  
   gameState.players.push(player);
   gameState.announcer = `${cleanName} joined the game.`;
   emitState();
@@ -327,7 +335,7 @@ function resolveSector(sector) {
     case "opponentsChoice":
       gameState.activeCategory = null;
       gameState.announcer = `${currentPlayer.name} landed on Opponents' Choice. Opponents choose the category.`;
-      gameState.awaiting = "categorySelect";
+      gameState.awaiting = "oppCategorySelect";
       break;
 
     case "freeSpin":
@@ -424,7 +432,7 @@ gameServer.on("connection", (socket) => {
 
   socket.emit("state", gameState);
 
-  socket.on("join", handleJoin);
+  socket.on("join", (payload) => handleJoin(payload, socket));
   socket.on("startGame", handleStartGame);
   socket.on("endGame", handleEndGame);
   socket.on("selectCategory", handleSelectCategory);

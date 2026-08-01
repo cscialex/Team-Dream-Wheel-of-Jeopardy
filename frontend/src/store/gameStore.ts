@@ -16,12 +16,13 @@ type GameState = {
     spinResult: Sector | null;
     phase: GamePhase;
     currentPlayerIndex: number;
+    socketId: string | null;
     round: 1 | 2;
     spinsRemaining: number;
     board: Cell[][];
     activeCategory: number | null;
     announcer: string;
-    awaiting: "spin" | "categorySelect" | "questionSelect" | "answerSelect" | null;
+    awaiting: "spin" | "categorySelect" | "oppCategorySelect" | "questionSelect" | "answerSelect" | null;
     tokenRedemption: boolean;
     currentQuestion: {
       questionText: string;
@@ -48,6 +49,7 @@ const useGameStore = create<GameState>()((set) => ({
     spinResult: null,
     phase: "setup",
     currentPlayerIndex: 0,
+    socketId: null,
     round: 1,
     spinsRemaining: 30,
     board: makeBoard(valuesForRound(1)),
@@ -77,5 +79,6 @@ const useGameStore = create<GameState>()((set) => ({
 }));
 
 gameSocket.on("state", (state) => useGameStore.getState().applyServerState(state));
+gameSocket.on("connect", () => useGameStore.getState().applyServerState({ socketId: gameSocket.id ?? null }));
 
 export default useGameStore;
