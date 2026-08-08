@@ -1,14 +1,17 @@
 .layout {
 	min-height: 100vh;
 	width: 100%;
-	background: radial-gradient(ellipse at 50% -10%, var(--color-navy-500) 0%, var(--color-navy-800) 55%, var(--color-navy-900) 100%);
 	font-family: var(--font-body);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 22px 24px 30px;
 	box-sizing: border-box;
 	position: relative;
+}
+
+.gameContent {
+	background: radial-gradient(ellipse at 50% -10%, var(--color-navy-500) 0%, var(--color-navy-800) 55%, var(--color-navy-900) 100%);
+	padding: 22px 24px 30px;
 }
 
 .overlayCard {

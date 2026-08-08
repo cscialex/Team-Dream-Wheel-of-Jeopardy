@@ -34,6 +34,7 @@ type GameState = {
     join: (name: string) => void;
     startGame: () => void;
     endGame: () => void;
+    advanceRound: () => void;
 
     setPhase: (phase: GamePhase) => void;
     selectCategory: (category: number) => void;
@@ -66,6 +67,8 @@ const useGameStore = create<GameState>()((set) => ({
     endGame: () => gameSocket.emit("endGame", {}),
 
     setPhase: (phase) => set(() => ({ phase })),
+
+    advanceRound: () => gameSocket.emit("advanceRound", {}),
 
     selectCategory: (category) => gameSocket.emit("selectCategory", { category }),
 

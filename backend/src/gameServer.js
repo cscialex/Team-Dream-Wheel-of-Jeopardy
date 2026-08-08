@@ -10,12 +10,12 @@ const SPIN_DURATION_MS = 4000;
 const ROUND1_VALUES = [100, 200, 300, 400, 500];
 const ROUND2_VALUES = [200, 400, 600, 800, 1000];
 const CAT_COLORS = [
-  "var(--color-blue)",
-  "var(--color-red)",
-  "var(--color-green)",
-  "var(--color-purple)",
-  "var(--color-orange)",
-  "var(--color-teal)",
+    "var(--color-blue)",
+    "var(--color-red)",
+    "var(--color-green)",
+    "var(--color-purple)",
+    "var(--color-orange)",
+    "var(--color-teal)",
 ];
 
 const repository = new QuestionRepository();
@@ -25,36 +25,36 @@ const categories = repository.getAllCategories().slice(0, 6);
 const categoryLabels = categories.map((category) => category.categoryName);
 
 const SPECIAL_SECTORS = [
-  { type: "loseTurn", label: "Lose Turn", color: "var(--color-dark-grey)" },
-  { type: "freeSpin", label: "Free Spin", color: "var(--color-gold)" },
-  { type: "bankrupt", label: "Bankrupt", color: "var(--color-dark-red)" },
-  { type: "playersChoice", label: "Player's Choice", color: "#0ea5e9" },
-  { type: "opponentsChoice", label: "Opponents' Choice", color: "#c026d3" },
+    { type: "loseTurn", label: "Lose Turn", color: "var(--color-dark-grey)" },
+    { type: "freeSpin", label: "Free Spin", color: "var(--color-gold)" },
+    { type: "bankrupt", label: "Bankrupt", color: "var(--color-dark-red)" },
+    { type: "playersChoice", label: "Player's Choice", color: "#0ea5e9" },
+    { type: "opponentsChoice", label: "Opponents' Choice", color: "#c026d3" },
 ];
 
 const SECTORS = [
-  ...categoryLabels.map((name, index) => ({
-    type: "category",
-    label: name,
-    color: CAT_COLORS[index],
-    catIndex: index,
-  })),
-  ...SPECIAL_SECTORS,
+    ...categoryLabels.map((name, index) => ({
+        type: "category",
+        label: name,
+        color: CAT_COLORS[index],
+        catIndex: index,
+    })),
+    ...SPECIAL_SECTORS,
 ];
 
 const gameState = {
-  players: [],
-  phase: "setup",
-  currentPlayerIndex: 0,
-  round: 1,
-  spinsRemaining: 30,
-  board: makeBoard(ROUND1_VALUES),
-  activeCategory: null,
-  announcer: "Waiting for players to join.",
-  isSpinning: false,
-  spinResult: null,
-  currentQuestion: null,
-  awaiting: null // "spin" | "categorySelect" | "oppCategorySelect" | "questionSelect" | "answerSelect" | null
+    players: [],
+    phase: "setup",
+    currentPlayerIndex: 0,
+    round: 1,
+    spinsRemaining: 30,
+    board: makeBoard(ROUND1_VALUES),
+    activeCategory: null,
+    announcer: "Waiting for players to join.",
+    isSpinning: false,
+    spinResult: null,
+    currentQuestion: null,
+    awaiting: null // "spin" | "categorySelect" | "oppCategorySelect" | "questionSelect" | "answerSelect" | null
 };
 
 const app = express();
@@ -63,10 +63,10 @@ app.use(express.json());
 
 const httpServer = createServer(app);
 const gameServer = new Server(httpServer, {
-  cors: {
-    origin: APP_ORIGIN,
-    methods: ["GET", "POST"],
-  },
+    cors: {
+        origin: APP_ORIGIN,
+        methods: ["GET", "POST"],
+    },
 });
 
 /* -------------------------------------------------------------------------- */
@@ -74,38 +74,38 @@ const gameServer = new Server(httpServer, {
 /* -------------------------------------------------------------------------- */
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, subsystem: "SS-03 Question Repository", language: "JavaScript" });
+    res.json({ ok: true, subsystem: "SS-03 Question Repository", language: "JavaScript" });
 });
 
 app.get("/api/categories", (_req, res) => {
-  res.json(repository.getAllCategories());
+    res.json(repository.getAllCategories());
 });
 
 app.get("/api/questions/category/:categoryId", (req, res) => {
-  const categoryId = Number(req.params.categoryId);
-  if (!Number.isInteger(categoryId)) {
-    return res.status(400).json({ error: "categoryId must be an integer." });
-  }
+    const categoryId = Number(req.params.categoryId);
+    if (!Number.isInteger(categoryId)) {
+        return res.status(400).json({ error: "categoryId must be an integer." });
+    }
 
-  res.json(repository.getQuestionsByCategory(categoryId));
+    res.json(repository.getQuestionsByCategory(categoryId));
 });
 
 app.get("/api/questions/:questionId", (req, res) => {
-  const questionId = Number(req.params.questionId);
-  if (!Number.isInteger(questionId)) {
-    return res.status(400).json({ error: "questionId must be an integer." });
-  }
+    const questionId = Number(req.params.questionId);
+    if (!Number.isInteger(questionId)) {
+        return res.status(400).json({ error: "questionId must be an integer." });
+    }
 
-  const question = repository.getQuestionById(questionId);
-  if (!question) {
-    return res.status(404).json({ error: "Question not found." });
-  }
+    const question = repository.getQuestionById(questionId);
+    if (!question) {
+        return res.status(404).json({ error: "Question not found." });
+    }
 
-  res.json(question);
+    res.json(question);
 });
 
 app.get("/api/validate", (_req, res) => {
-  res.json(repository.validateRepository());
+    res.json(repository.validateRepository());
 });
 
 /* -------------------------------------------------------------------------- */
@@ -113,340 +113,358 @@ app.get("/api/validate", (_req, res) => {
 /* -------------------------------------------------------------------------- */
 
 function emitState() {
-  gameServer.emit("state", gameState);
+    gameServer.emit("state", gameState);
 }
 
 function handleJoin({ name } = {}, socket) {
-  console.log("Player Name: ", name);
-  console.log("SocketId: ", socket.id);
+    const cleanName = name?.trim();
+    if (!cleanName) return;
 
-  const cleanName = name?.trim();
-  if (!cleanName) return;
+    if (gameState.players.length >= 4) {
+        gameState.announcer = "The game already has the maximum of 4 players.";
+        emitState();
+        return;
+    }
 
-  if (gameState.players.length >= 4) {
-    gameState.announcer = "The game already has the maximum of 4 players.";
+    const socketId = socket.id;
+
+    const player = {
+        id: gameState.players.length,
+        name: cleanName,
+        score: 0,
+        tokens: 0,
+        socketId: socketId
+    };
+    
+    gameState.players.push(player);
+    gameState.announcer = `${cleanName} joined the game.`;
     emitState();
-    return;
-  }
-
-  console.log("SocketId: ", socket.id);
-
-  const socketId = socket.id;
-
-  const player = {
-    id: gameState.players.length,
-    name: cleanName,
-    score: 0,
-    tokens: 0,
-    socketId: socketId
-  };
-  
-  gameState.players.push(player);
-  gameState.announcer = `${cleanName} joined the game.`;
-  emitState();
 }
 
 function handleStartGame() {
-  const validation = repository.validateRepository();
+    const validation = repository.validateRepository();
 
-  if (gameState.players.length < 2) {
-    gameState.announcer = "At least 2 players are required to start.";
+    if (gameState.players.length < 2) {
+        gameState.announcer = "At least 2 players are required to start.";
+        emitState();
+        return;
+    }
+
+    if (!validation.valid) {
+        gameState.announcer = `Repository validation failed: ${validation.errors.join(" ")}`;
+        emitState();
+        return;
+    }
+
+    gameState.phase = "playing";
+    gameState.round = 1;
+    gameState.spinsRemaining = 30;
+    gameState.board = makeBoard(ROUND1_VALUES);
+    gameState.activeCategory = null;
+    gameState.currentQuestion = null;
+    gameState.awaiting = "spin";
+    gameState.announcer = "Game started. First player may spin.";
     emitState();
-    return;
-  }
-
-  if (!validation.valid) {
-    gameState.announcer = `Repository validation failed: ${validation.errors.join(" ")}`;
-    emitState();
-    return;
-  }
-
-  gameState.phase = "playing";
-  gameState.round = 1;
-  gameState.spinsRemaining = 30;
-  gameState.board = makeBoard(ROUND1_VALUES);
-  gameState.activeCategory = null;
-  gameState.currentQuestion = null;
-  gameState.awaiting = "spin";
-  gameState.announcer = "Game started. First player may spin.";
-  emitState();
 }
 
 function handleEndGame() {
-  //gameState.phase = "gameOver";
-  const gamePlayers = gameState.players;
-  const maxScore = Math.max(...gamePlayers.map(player => player.score));
-  const winnerNames = gamePlayers.filter(player => player.score == maxScore).map(player => player.name).join(", ");
-  gameState.announcer = `Game over. Player(s) ${winnerNames} win!`;
-  emitState();
+    gameState.phase = "gameOver";
+    const gamePlayers = gameState.players;
+    const maxScore = Math.max(...gamePlayers.map(player => player.score));
+    const winnerNames = gamePlayers.filter(player => player.score == maxScore).map(player => player.name).join(", ");
+    gameState.announcer = `Game over. Player(s) ${winnerNames} win!`;
+    emitState();
 }
 
-function handleSelectCategory({ category } = {}) {
-  if (!isValidCategoryIndex(category)) {
-    gameState.announcer = "Invalid category selection.";
-    emitState();
-    return;
-  }
-
-  gameState.activeCategory = category;
-  gameState.announcer = `${categoryLabels[category]} selected.`;
-  gameState.awaiting = "questionSelect";
-  emitState();
+function isCurrentPlayerSocket(socket) {
+    const currPlayer = gameState.players[gameState.currentPlayerIndex];
+    return !!currPlayer && currPlayer.socketId === socket.id;
 }
 
-function handleSelectCell({ category, row } = {}) {
-  if (!isValidCategoryIndex(category) || !isValidRowIndex(row)) {
-    gameState.announcer = "Invalid board cell selection.";
+function handleSelectCategory({ category } = {}, socket) {
+    const authorized =
+        gameState.awaiting === "oppCategorySelect"
+        ? !isCurrentPlayerSocket(socket) && gameState.players.some((p) => p.socketId === socket.id)
+        : isCurrentPlayerSocket(socket);
+    if (!authorized) return;
+
+    if (!isValidCategoryIndex(category)) {
+        gameState.announcer = "Invalid category selection.";
+        emitState();
+        return;
+    }
+
+    gameState.activeCategory = category;
+    gameState.announcer = `${categoryLabels[category]} selected.`;
+    gameState.awaiting = "questionSelect";
     emitState();
-    return;
-  }
-
-  const cell = gameState.board[category][row];
-  if (cell.answered) {
-    gameState.announcer = "That question has already been answered.";
-    emitState();
-    return;
-  }
-
-  const categoryId = categories[category].categoryId;
-  //const basePointValue = gameState.round === 1 ? ROUND1_VALUES[row] : ROUND2_VALUES[row];
-  const basePointValue = ROUND1_VALUES[row]; // same either way
-  const question = repository.getQuestionForCategoryAndValue(categoryId, basePointValue, gameState.round); // this is where round handling comes in
-
-  if (!question) {
-    gameState.announcer = "No question was found for that board cell.";
-    emitState();
-    return;
-  }
-
-  cell.answered = true;
-  gameState.activeCategory = category;
-  gameState.currentQuestion = toPublicQuestion(question);
-  gameState.announcer = `${categoryLabels[category]} for $${valuesForRound(gameState.round)[row]}.`;
-  gameState.awaiting = "answerSelect";
-  emitState();
 }
 
-function handleSelectAnswer( {answerId} = {} ) {
-  if(gameState.currentQuestion != null) {
-    const p = gameState.players[gameState.currentPlayerIndex];
-    const q = gameState.currentQuestion;
-    const dbQ = repository.getQuestionById(q.questionId);
+function handleSelectCell({ category, row } = {}, socket) {
+    if (!isCurrentPlayerSocket(socket)) return;
 
-    const ansMatch = dbQ?.answers.find(a => a.answerId === answerId);
-    const correct = ansMatch?.isCorrect;
+    if (!isValidCategoryIndex(category) || !isValidRowIndex(row)) {
+        gameState.announcer = "Invalid board cell selection.";
+        emitState();
+        return;
+    }
 
-    if(correct) {
-      p.score += q.pointValue;
-      gameState.announcer = `${p.name} got the question correct!`;
-      gameState.awaiting = "spin";
+    const cell = gameState.board[category][row];
+    if (cell.answered) {
+        gameState.announcer = "That question has already been answered.";
+        emitState();
+        return;
+    }
+
+    const categoryId = categories[category].categoryId;
+    //const basePointValue = gameState.round === 1 ? ROUND1_VALUES[row] : ROUND2_VALUES[row];
+    const basePointValue = ROUND1_VALUES[row]; // same either way
+    const question = repository.getQuestionForCategoryAndValue(categoryId, basePointValue, gameState.round); // this is where round handling comes in
+
+    if (!question) {
+        gameState.announcer = "No question was found for that board cell.";
+        emitState();
+        return;
+    }
+
+    cell.answered = true;
+    gameState.activeCategory = category;
+    gameState.currentQuestion = toPublicQuestion(question);
+    gameState.announcer = `${categoryLabels[category]} for $${valuesForRound(gameState.round)[row]}.`;
+    gameState.awaiting = "answerSelect";
+    emitState();
+}
+
+function handleSelectAnswer( {answerId} = {}, socket ) {
+    if (!isCurrentPlayerSocket(socket)) return;
+
+    if(gameState.currentQuestion != null) {
+        const p = gameState.players[gameState.currentPlayerIndex];
+        const q = gameState.currentQuestion;
+        const dbQ = repository.getQuestionById(q.questionId);
+
+        const ansMatch = dbQ?.answers.find(a => a.answerId === answerId);
+        const correct = ansMatch?.isCorrect;
+
+        if(correct) {
+        p.score += q.pointValue;
+        gameState.announcer = `${p.name} got the question correct!`;
+        gameState.awaiting = "spin";
+        }
+        else {
+        p.score -= q.pointValue;
+        gameState.announcer = `${p.name} got the question incorrect!`;
+        if(p.tokens > 0) {
+            gameState.tokenRedemption = true; // prompt token redemption
+        }
+        else {
+            gameState.awaiting = "spin";
+            advanceTurn();
+        }
+        }
     }
     else {
-      p.score -= q.pointValue;
-      gameState.announcer = `${p.name} got the question incorrect!`;
-      if(p.tokens > 0) {
-        gameState.tokenRedemption = true; // prompt token redemption
-      }
-      else {
+        gameState.announcer = 'No question to choose answer for.'
+        emitState();
+        return;
+    }
+
+    gameState.currentQuestion = null;
+    noSpinsCheck();
+    emitState();
+}
+
+function handleTokenRedemption ({redeem} = {}, socket) {
+    if (!isCurrentPlayerSocket(socket)) return;
+
+    const p = gameState.players[gameState.currentPlayerIndex];
+    if(redeem == true) {
+        p.tokens -= 1;
+        gameState.announcer = `${p.name}, spin again!`;
+        gameState.awaiting = "spin";
+        noSpinsCheck();
+    }
+    else {
         gameState.awaiting = "spin";
         advanceTurn();
-      }
     }
-  }
-  else {
-    gameState.announcer = 'No question to choose answer for.'
+
+    gameState.tokenRedemption = false;
     emitState();
-    return;
-  }
-
-  gameState.currentQuestion = null;
-  noSpinsCheck();
-  emitState();
 }
 
-function handleTokenRedemption ({redeem} = {}) {
-  const p = gameState.players[gameState.currentPlayerIndex];
-  if(redeem == true) {
-    p.tokens -= 1;
-    gameState.announcer = `${p.name}, spin again!`;
-    gameState.awaiting = "spin";
-    noSpinsCheck();
-  }
-  else {
-    gameState.awaiting = "spin";
-    advanceTurn();
-  }
-  gameState.tokenRedemption = false;
-  emitState();
-}
+function handleSpin(callback, socket) {
+    if (
+        gameState.phase !== "playing" ||
+        gameState.isSpinning ||
+        gameState.spinsRemaining <= 0 ||
+        !isCurrentPlayerSocket(socket)
+    ) {
+        return;
+    }
 
-function handleSpin(callback) {
-  if (gameState.phase !== "playing" || gameState.isSpinning || gameState.spinsRemaining <= 0) {
-    return;
-  }
-
-  gameState.isSpinning = true;
-  gameState.spinResult = null;
-  gameState.currentQuestion = null;
-  gameState.announcer = "Wheel spinning...";
-
-  const sector = SECTORS[Math.floor(Math.random() * SECTORS.length)];
-  resolveSector(sector);
-
-  if (typeof(callback) === "function") {
-    callback(sector);
-  }
-
-  setTimeout(() => {
-    gameState.isSpinning = false;
-    gameState.spinResult = sector;
+    gameState.isSpinning = true;
+    gameState.spinResult = null;
+    gameState.currentQuestion = null;
+    gameState.announcer = "Wheel spinning...";
     gameState.spinsRemaining -= 1;
-    emitState();
-  }, SPIN_DURATION_MS);
+
+    const sector = SECTORS[Math.floor(Math.random() * SECTORS.length)];
+    resolveSector(sector);
+
+    if (typeof(callback) === "function") {
+        callback(sector);
+    }
+
+    setTimeout(() => {
+        gameState.isSpinning = false;
+        gameState.spinResult = sector;
+        emitState();
+    }, SPIN_DURATION_MS);
 }
 
 function resolveSector(sector) {
-  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
 
-  if (!currentPlayer) {
-    gameState.announcer = "No active player found.";
-    return;
-  }
+    if (!currentPlayer) {
+        gameState.announcer = "No active player found.";
+        return;
+    }
 
   switch (sector.type) {
     case "category":
-      gameState.activeCategory = sector.catIndex ?? null;
-      gameState.announcer = `${currentPlayer.name} landed on ${sector.label}. Select a question.`;
-      if(gameState.board[gameState.activeCategory].every(question => question.answered)) {
-        gameState.announcer = `All category questions answered in ${sector.label}. ${currentPlayer.name}, please spin again.`;
-        noSpinsCheck();
-      }
-      else {
-        gameState.awaiting = "questionSelect";
-      }
-      break;
+        gameState.activeCategory = sector.catIndex ?? null;
+        gameState.announcer = `${currentPlayer.name} landed on ${sector.label}. Select a question.`;
+        if(gameState.board[gameState.activeCategory].every(question => question.answered)) {
+            gameState.announcer = `All category questions answered in ${sector.label}. ${currentPlayer.name}, please spin again.`;
+            noSpinsCheck();
+        }
+        else {
+            gameState.awaiting = "questionSelect";
+        }
+        break;
 
     case "playersChoice":
-      gameState.activeCategory = null;
-      gameState.announcer = `${currentPlayer.name} landed on Player's Choice. Choose any available category.`;
-      gameState.awaiting = "categorySelect";
-      break;
+        gameState.activeCategory = null;
+        gameState.announcer = `${currentPlayer.name} landed on Player's Choice. Choose any available category.`;
+        gameState.awaiting = "categorySelect";
+        break;
 
     case "opponentsChoice":
-      gameState.activeCategory = null;
-      gameState.announcer = `${currentPlayer.name} landed on Opponents' Choice. Opponents choose the category.`;
-      gameState.awaiting = "oppCategorySelect";
-      break;
+        gameState.activeCategory = null;
+        gameState.announcer = `${currentPlayer.name} landed on Opponents' Choice. Opponents choose the category.`;
+        gameState.awaiting = "oppCategorySelect";
+        break;
 
     case "freeSpin":
-      currentPlayer.tokens += 1;
-      gameState.announcer = `${currentPlayer.name} earned a Free Spin token and may spin again.`;
-      noSpinsCheck();
-      break;
+        currentPlayer.tokens += 1;
+        gameState.announcer = `${currentPlayer.name} earned a Free Spin token and may spin again.`;
+        noSpinsCheck();
+        break;
 
     case "loseTurn":
-      if (currentPlayer.tokens > 0) {
-        gameState.announcer = `${currentPlayer.name} landed on Lose Turn and has a Free Spin token available.`;
-        gameState.tokenRedemption = true; // prompt token redemption
-      } else {
-        gameState.announcer = `${currentPlayer.name} lost a turn.`;
-        advanceTurn();
-      }
-      break;
+        if (currentPlayer.tokens > 0) {
+            gameState.announcer = `${currentPlayer.name} landed on Lose Turn and has a Free Spin token available.`;
+            gameState.tokenRedemption = true; // prompt token redemption
+        } else {
+            gameState.announcer = `${currentPlayer.name} lost a turn.`;
+            advanceTurn();
+        }
+        break;
 
     case "bankrupt":
-      currentPlayer.score = 0;
-      gameState.announcer = `${currentPlayer.name} landed on Bankrupt. Score reset.`;
-      advanceTurn();
-      break;
+        currentPlayer.score = 0;
+        gameState.announcer = `${currentPlayer.name} landed on Bankrupt. Score reset.`;
+        advanceTurn();
+        break;
 
     default:
-      gameState.announcer = "Unknown wheel result.";
-      noSpinsCheck();
-      break;
+        gameState.announcer = "Unknown wheel result.";
+        noSpinsCheck();
+        break;
   }
 }
 
 function advanceRound() {
-  gameState.phase = "playing";
-  gameState.round = 2;
-  gameState.announcer = "Round 1 complete! Now onto Round 2.";
-  gameState.spinsRemaining = 30;
-  gameState.board = makeBoard(ROUND2_VALUES);
-  gameState.activeCategory = null;
-  gameState.currentQuestion = null;
-  gameState.awaiting = "spin";
-  emitState();
+    gameState.phase = "playing";
+    gameState.round = 2;
+    gameState.announcer = "Round 1 complete! Now onto Round 2.";
+    gameState.spinsRemaining = 30;
+    gameState.board = makeBoard(ROUND2_VALUES);
+    gameState.activeCategory = null;
+    gameState.currentQuestion = null;
+    gameState.awaiting = "spin";
+    emitState();
 }
 
 function noSpinsCheck() {
-  if (gameState.spinsRemaining <= 0) {
-    if (gameState.round === 1) {
-      // Advance only if no spins remaining and round = 1
-      advanceRound();
-    } else {
-      // In round 2, if no spins are remaining, game over.
-      //gameState.phase = "gameOver";
-      handleEndGame();
+    if (gameState.spinsRemaining <= 0) {
+        if (gameState.round === 1) {
+        // Advance only if no spins remaining and round = 1
+        advanceRound();
+        } else {
+        // In round 2, if no spins are remaining, game over.
+        handleEndGame();
+        }
     }
-  }
 }
 
 function advanceTurn() {
-  if (gameState.players.length === 0) return;
-  gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-  noSpinsCheck();
+    if (gameState.players.length === 0) return;
+    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+    noSpinsCheck();
 }
 
 function makeBoard(roundValues) {
-  return categoryLabels.map(() => roundValues.map(() => ({ answered: false })));
+    return categoryLabels.map(() => roundValues.map(() => ({ answered: false })));
 }
 
 function valuesForRound(round) {
-  return round === 1 ? ROUND1_VALUES : ROUND2_VALUES;
+    return round === 1 ? ROUND1_VALUES : ROUND2_VALUES;
 }
 
 function isValidCategoryIndex(category) {
-  return Number.isInteger(category) && category >= 0 && category < categoryLabels.length;
+    return Number.isInteger(category) && category >= 0 && category < categoryLabels.length;
 }
 
 function isValidRowIndex(row) {
-  return Number.isInteger(row) && row >= 0 && row < ROUND1_VALUES.length;
+    return Number.isInteger(row) && row >= 0 && row < ROUND1_VALUES.length;
 }
 
 function toPublicQuestion(question) {
-  return {
-    questionId: question.questionId,
-    categoryId: question.categoryId,
-    pointValue: question.pointValue,
-    questionText: question.questionText,
-    answers: question.answers.map((answer) => ({
-      answerId: answer.answerId,
-      answerText: answer.answerText,
-    })),
-  };
+    return {
+        questionId: question.questionId,
+        categoryId: question.categoryId,
+        pointValue: question.pointValue,
+        questionText: question.questionText,
+        answers: question.answers.map((answer) => ({
+        answerId: answer.answerId,
+        answerText: answer.answerText,
+        })),
+    };
 }
 
 gameServer.on("connection", (socket) => {
-  console.log("Client connected with socket.id:", socket.id);
+    console.log("Client connected with socket.id:", socket.id);
 
-  socket.emit("state", gameState);
+    socket.emit("state", gameState);
 
-  socket.on("join", (payload) => handleJoin(payload, socket));
-  socket.on("startGame", handleStartGame);
-  socket.on("endGame", handleEndGame);
-  socket.on("selectCategory", handleSelectCategory);
-  socket.on("selectCell", handleSelectCell);
-  socket.on("spin", (callback) => handleSpin(callback));
-  socket.on("selectAnswer", handleSelectAnswer);
-  socket.on("redeemToken", handleTokenRedemption);
+    socket.on("join", (payload) => handleJoin(payload, socket));
+    socket.on("startGame", handleStartGame);
+    socket.on("endGame", handleEndGame);
+    socket.on("selectCategory", (payload) => handleSelectCategory(payload, socket));
+    socket.on("selectCell", (payload) => handleSelectCell(payload, socket));
+    socket.on("spin", (callback) => handleSpin(callback, socket));
+    socket.on("selectAnswer", (payload) => handleSelectAnswer(payload, socket));
+    socket.on("redeemToken", (payload) => handleTokenRedemption(payload, socket));
+    socket.on("advanceRound", advanceRound);
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected with socket.id:", socket.id);
-  });
+    socket.on("disconnect", () => {
+        console.log("Client disconnected with socket.id:", socket.id);
+    });
 });
 
 httpServer.listen(PORT, () => {
-  console.log(`Backend server listening on localhost at port: ${PORT}`);
-  console.log("Repository validation:", repository.validateRepository());
+    console.log(`Backend server listening on localhost at port: ${PORT}`);
+    console.log("Repository validation:", repository.validateRepository());
 });

@@ -1,5 +1,6 @@
 import { GameScreen } from "./components/screens/game-screen/GameScreen";
 import SetupScreen from "./components/screens/setup-screen/SetupScreen";
+import GameOverScreen from "./components/screens/game-over-screen/GameOverScreen";
 import useGameStore from "./store/gameStore";
 
 /**
@@ -17,7 +18,7 @@ function App() {
 		case "playing":
 			return <GameScreen />
 		case "gameOver":
-			return <SetupScreen />
+			return <GameOverScreen />
 		default:
 			throw new Error("Invalid phase provided");
 	}
