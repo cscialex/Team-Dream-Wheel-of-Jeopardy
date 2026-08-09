@@ -1,0 +1,70 @@
+.layout {
+	min-height: 100vh;
+	width: 100%;
+	font-family: var(--font-body);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	box-sizing: border-box;
+	position: relative;
+}
+
+.gameContent {
+	background: radial-gradient(ellipse at 50% -10%, var(--color-navy-500) 0%, var(--color-navy-800) 55%, var(--color-navy-900) 100%);
+	padding: 22px 24px 30px;
+}
+
+.overlayCard {
+	padding: 8rem 6rem;
+	color: var(--color-gold) !important;
+}
+
+.dots::after {
+	content: "";
+	display: inline-block;
+	width: 1.5ch;
+	text-align: left;
+	animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+	0%,
+	25% {
+		content: "";
+	}
+	26%,
+	50% {
+		content: ".";
+	}
+	51%,
+	75% {
+		content: "..";
+	}
+	76%,
+	100% {
+		content: "...";
+	}
+}
+
+
+.topBarLeft {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.scoreboard {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.mainRow {
+	width: 100%;
+	max-width: 1400px;
+	display: flex;
+	gap: 22px;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	justify-content: center;
+}

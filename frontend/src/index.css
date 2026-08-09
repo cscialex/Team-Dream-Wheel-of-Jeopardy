@@ -1,0 +1,58 @@
+:root {
+  /* Color palette */
+	--color-navy-900: #030518;
+	--color-navy-800: #050a30;
+	--color-navy-700: #0a1240;
+	--color-navy-600: #0f1a52;
+	--color-navy-500: #0d1a6b;
+	--color-navy-border: #2a3a8f;
+
+	--color-gold: #ffd447;
+	--color-gold-light: #FFD962;
+	--color-gold-dark: #DEB83D;
+
+	--color-blue-muted: #9fb0f0;
+	--color-blue-pale: #c9d4ff;
+	--color-blue-dim: #7d8ce0;
+
+	--color-green: #3fb26f;
+	--color-red: #e8433f;
+	--color-blue: #2f6fed;
+	--color-purple: #a855f7;
+	--color-orange: #f97316;
+	--color-teal: #14b8a6;
+	--color-dark-grey: #4b5563;
+	--color-dark-red: #7f1d1d;
+	--color-white: #fff;
+
+	--font-color: #030518;
+  /* Anton is used to mimic the Jeopardy font */
+	--font-jeopardy: "Anton", sans-serif;
+	--font-body: "Inter", system-ui, sans-serif;
+}
+
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+html, body {
+	width: 100%;
+	height: 100%;
+}
+
+body {
+	min-height: 100dvh;
+	display: flex;
+	flex-direction: column;
+
+	font-family: var(--font-body);
+	line-height: 1.5;
+}
+
+#root {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
