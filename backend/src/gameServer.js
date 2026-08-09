@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { randomUUID } from "node:crypto";
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
@@ -17,6 +18,8 @@ const CAT_COLORS = [
     "var(--color-orange)",
     "var(--color-teal)",
 ];
+
+const DEFAULT_NUM_SPINS = 1;
 
 const repository = new QuestionRepository();
 repository.seedIfEmpty();
@@ -47,7 +50,7 @@ const gameState = {
     phase: "setup",
     currentPlayerIndex: 0,
     round: 1,
-    spinsRemaining: 30,
+    spinsRemaining: DEFAULT_NUM_SPINS,
     board: makeBoard(ROUND1_VALUES),
     activeCategory: null,
     announcer: "Waiting for players to join.",
@@ -113,12 +116,42 @@ app.get("/api/validate", (_req, res) => {
 /* -------------------------------------------------------------------------- */
 
 function emitState() {
-    gameServer.emit("state", gameState);
+    const publicPlayers = gameState.players.map(({ sessionToken, ...publicPlayer }) => publicPlayer);
+    gameServer.emit("state", { ...gameState, players: publicPlayers });
 }
 
-function handleJoin({ name } = {}, socket) {
+function handlePlayAgain() {
+    gameState.players = [];
+    gameState.phase = "setup"
+    gameState.currentPlayerIndex = 0
+    gameState.round = 1
+    gameState.spinsRemaining = DEFAULT_NUM_SPINS
+    gameState.board = makeBoard(ROUND1_VALUES)
+    gameState.activeCategory = null
+    gameState.announcer = "Waiting for players to join."
+    gameState.isSpinning = false
+    gameState.spinResult = null
+    gameState.currentQuestion = null
+    gameState.awaiting = null // "spin" | "categorySelect" | "oppCategorySelect" | "questionSelect" | "answerSelect" | null
+    emitState();
+}
+
+function handleJoin({ name, sessionToken } = {}, socket, callback) {
     const cleanName = name?.trim();
     if (!cleanName) return;
+
+    const existingPlayer = sessionToken
+        ? gameState.players.find((p) => p.sessionToken === sessionToken)
+        : undefined;
+
+    if (existingPlayer) {
+        existingPlayer.socketId = socket.id;
+        existingPlayer.name = cleanName;
+        gameState.announcer = `${cleanName} reconnected`;
+        emitState();
+        if (typeof callback === "function") callback({ sessionToken: existingPlayer.sessionToken });
+        return;
+    }
 
     if (gameState.players.length >= 4) {
         gameState.announcer = "The game already has the maximum of 4 players.";
@@ -126,19 +159,22 @@ function handleJoin({ name } = {}, socket) {
         return;
     }
 
-    const socketId = socket.id;
+    const newSessionToken = randomUUID();
 
     const player = {
         id: gameState.players.length,
         name: cleanName,
-        score: 0,
+        scoreRound1: 0,
+        scoreRound2: 0,
         tokens: 0,
-        socketId: socketId
+        socketId: socket.id,
+        sessionToken: newSessionToken,
     };
-    
+
     gameState.players.push(player);
     gameState.announcer = `${cleanName} joined the game.`;
     emitState();
+    if (typeof callback === "function") callback({ sessionToken: newSessionToken });
 }
 
 function handleStartGame() {
@@ -158,7 +194,7 @@ function handleStartGame() {
 
     gameState.phase = "playing";
     gameState.round = 1;
-    gameState.spinsRemaining = 30;
+    gameState.spinsRemaining = DEFAULT_NUM_SPINS;
     gameState.board = makeBoard(ROUND1_VALUES);
     gameState.activeCategory = null;
     gameState.currentQuestion = null;
@@ -170,8 +206,10 @@ function handleStartGame() {
 function handleEndGame() {
     gameState.phase = "gameOver";
     const gamePlayers = gameState.players;
-    const maxScore = Math.max(...gamePlayers.map(player => player.score));
-    const winnerNames = gamePlayers.filter(player => player.score == maxScore).map(player => player.name).join(", ");
+
+    const maxScore = Math.max(...gamePlayers.map(player => player.scoreRound1 + player.scoreRound2));
+    
+    const winnerNames = gamePlayers.filter(player => (player.scoreRound1 + player.scoreRound2) == maxScore).map(player => player.name).join(", ");
     gameState.announcer = `Game over. Player(s) ${winnerNames} win!`;
     emitState();
 }
@@ -197,7 +235,7 @@ function handleSelectCategory({ category } = {}, socket) {
     gameState.activeCategory = category;
     gameState.announcer = `${categoryLabels[category]} selected.`;
     gameState.awaiting = "questionSelect";
-    emitState();
+    emitState(); 
 }
 
 function handleSelectCell({ category, row } = {}, socket) {
@@ -247,13 +285,20 @@ function handleSelectAnswer( {answerId} = {}, socket ) {
         const correct = ansMatch?.isCorrect;
 
         if(correct) {
-        p.score += q.pointValue;
-        gameState.announcer = `${p.name} got the question correct!`;
-        gameState.awaiting = "spin";
+            if (gameState.round == 1)
+                p.scoreRound1 += q.pointValue;
+            else if (gameState.round == 2)
+                p.scoreRound2 += q.pointValue;
+
+            gameState.announcer = `${p.name} got the question correct!`;
+            gameState.awaiting = "spin";
         }
         else {
-        p.score -= q.pointValue;
-        gameState.announcer = `${p.name} got the question incorrect!`;
+            if (gameState.round == 1)
+                p.scoreRound1 -= q.pointValue;
+            else if (gameState.round == 2)
+                p.scoreRound2 -= q.pointValue;
+            gameState.announcer = `${p.name} got the question incorrect!`;
         if(p.tokens > 0) {
             gameState.tokenRedemption = true; // prompt token redemption
         }
@@ -310,7 +355,7 @@ function handleSpin(callback, socket) {
     gameState.spinsRemaining -= 1;
 
     const sector = SECTORS[Math.floor(Math.random() * SECTORS.length)];
-    resolveSector(sector);
+    const postSpinAction = resolveSector(sector);
 
     if (typeof(callback) === "function") {
         callback(sector);
@@ -319,6 +364,13 @@ function handleSpin(callback, socket) {
     setTimeout(() => {
         gameState.isSpinning = false;
         gameState.spinResult = sector;
+
+        if (postSpinAction === "advanceTurn") {
+            advanceTurn();
+        } else if (postSpinAction === "checkSpins") {
+            noSpinsCheck();
+        }
+
         emitState();
     }, SPIN_DURATION_MS);
 }
@@ -328,7 +380,7 @@ function resolveSector(sector) {
 
     if (!currentPlayer) {
         gameState.announcer = "No active player found.";
-        return;
+        return null;
     }
 
   switch (sector.type) {
@@ -337,7 +389,7 @@ function resolveSector(sector) {
         gameState.announcer = `${currentPlayer.name} landed on ${sector.label}. Select a question.`;
         if(gameState.board[gameState.activeCategory].every(question => question.answered)) {
             gameState.announcer = `All category questions answered in ${sector.label}. ${currentPlayer.name}, please spin again.`;
-            noSpinsCheck();
+            return "checkSpins";
         }
         else {
             gameState.awaiting = "questionSelect";
@@ -359,8 +411,7 @@ function resolveSector(sector) {
     case "freeSpin":
         currentPlayer.tokens += 1;
         gameState.announcer = `${currentPlayer.name} earned a Free Spin token and may spin again.`;
-        noSpinsCheck();
-        break;
+        return "checkSpins";
 
     case "loseTurn":
         if (currentPlayer.tokens > 0) {
@@ -368,28 +419,32 @@ function resolveSector(sector) {
             gameState.tokenRedemption = true; // prompt token redemption
         } else {
             gameState.announcer = `${currentPlayer.name} lost a turn.`;
-            advanceTurn();
+            return "advanceTurn";
         }
         break;
 
     case "bankrupt":
-        currentPlayer.score = 0;
+        if (gameState.round == 1 && currentPlayer.scoreRound1 > 0)
+            currentPlayer.scoreRound1 = 0
+        else if (gameState.round == 2 && currentPlayer.scoreRound2 > 0)
+            currentPlayer.scoreRound2 = 0
+
         gameState.announcer = `${currentPlayer.name} landed on Bankrupt. Score reset.`;
-        advanceTurn();
-        break;
+        return "advanceTurn";
 
     default:
         gameState.announcer = "Unknown wheel result.";
-        noSpinsCheck();
-        break;
+        return "checkSpins";
   }
+
+  return null;
 }
 
 function advanceRound() {
     gameState.phase = "playing";
     gameState.round = 2;
     gameState.announcer = "Round 1 complete! Now onto Round 2.";
-    gameState.spinsRemaining = 30;
+    gameState.spinsRemaining = DEFAULT_NUM_SPINS;
     gameState.board = makeBoard(ROUND2_VALUES);
     gameState.activeCategory = null;
     gameState.currentQuestion = null;
@@ -400,11 +455,11 @@ function advanceRound() {
 function noSpinsCheck() {
     if (gameState.spinsRemaining <= 0) {
         if (gameState.round === 1) {
-        // Advance only if no spins remaining and round = 1
-        advanceRound();
+            // Advance only if no spins remaining and round = 1
+            advanceRound();
         } else {
-        // In round 2, if no spins are remaining, game over.
-        handleEndGame();
+            // In round 2, if no spins are remaining, game over.
+            handleEndGame();
         }
     }
 }
@@ -449,7 +504,7 @@ gameServer.on("connection", (socket) => {
 
     socket.emit("state", gameState);
 
-    socket.on("join", (payload) => handleJoin(payload, socket));
+    socket.on("join", (payload, callback) => handleJoin(payload, socket, callback));
     socket.on("startGame", handleStartGame);
     socket.on("endGame", handleEndGame);
     socket.on("selectCategory", (payload) => handleSelectCategory(payload, socket));
@@ -457,6 +512,7 @@ gameServer.on("connection", (socket) => {
     socket.on("spin", (callback) => handleSpin(callback, socket));
     socket.on("selectAnswer", (payload) => handleSelectAnswer(payload, socket));
     socket.on("redeemToken", (payload) => handleTokenRedemption(payload, socket));
+    socket.on("playAgain", handlePlayAgain);
     socket.on("advanceRound", advanceRound);
 
     socket.on("disconnect", () => {
