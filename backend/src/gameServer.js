@@ -19,7 +19,7 @@ const CAT_COLORS = [
     "var(--color-teal)",
 ];
 
-const DEFAULT_NUM_SPINS = 1;
+const DEFAULT_NUM_SPINS = 30;
 
 const repository = new QuestionRepository();
 repository.seedIfEmpty();
