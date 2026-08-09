@@ -56,7 +56,7 @@ export function GameScreen() {
     return (
         <div className={styles.layout}>
         {showScoreboard ? (
-            <RoundResults />
+            <RoundResults onAdvance={() => setShowScoreboard(false)} mode={"roundResults"} />
         ) : (
             <div className={styles.gameContent}>
             {/* Backdrop to disable player actions */}

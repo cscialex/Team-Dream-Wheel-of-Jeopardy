@@ -8,6 +8,8 @@ import {
 } from "../types/wheelOfJeopardy";
 import gameSocket from "../gameSocket";
 
+const SESSION_TOKEN_KEY = "team_dream_session_token";
+
 type GamePhase = "setup" | "playing" | "gameOver";
 
 type GameState = {
@@ -40,6 +42,7 @@ type GameState = {
     selectCategory: (category: number) => void;
     selectCell: (category: number, row: number) => void;
     selectAnswer: (answerId: number) => void;
+    playAgain: () => void;
     redeemToken: (redeem: boolean) => void;
     applyServerState: (state: Partial<GameState>) => void;
 };
@@ -60,7 +63,16 @@ const useGameStore = create<GameState>()((set) => ({
     tokenRedemption: false,
     currentQuestion: null,
 
-    join: (name) => gameSocket.emit("join", { name }),
+    join: (name) => {
+        const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
+        gameSocket.emit(
+            "join",
+            { name, sessionToken },
+            ({ sessionToken: newSessionToken }: { sessionToken: string }) => {
+                localStorage.setItem(SESSION_TOKEN_KEY, newSessionToken);
+            }
+        );
+    },
 
     startGame: () => gameSocket.emit("startGame", {}),
 
@@ -75,6 +87,8 @@ const useGameStore = create<GameState>()((set) => ({
     selectCell: (category, row) => gameSocket.emit("selectCell", { category, row }),
 
     selectAnswer: (answerId) => gameSocket.emit("selectAnswer", { answerId }),
+
+    playAgain: () => gameSocket.emit("playAgain", {}),
 
     redeemToken: (redeem) => gameSocket.emit("redeemToken", { redeem }),
 

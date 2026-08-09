@@ -8,52 +8,66 @@ import Card from "@mui/material/Card";
 import Button from "@mui/material/Button";
 
 type PlayerListEntryProps = {
-  player: Player;
-  isLeader: boolean;
+    score: number
+    player: Player;
+    isLeader: boolean;
 };
 
-function PlayerListEntry({ player, isLeader }: PlayerListEntryProps) {
-  return (
-    <div className={`${styles.playerEntry} ${isLeader ? styles.leader : ""}`}>
-        <Typography>
-            {player.name}
-        </Typography>
-        <Typography>
-            ${player.score}
-        </Typography>
-        <Typography className={styles.iconWithValue}>
-            <LocalActivityIcon
-                fontSize="small"
-                sx={{
-                    color: "var(--color-gold)",
-                }}
-            />
-            {player.tokens}
-        </Typography>
-    </div>
-  );
+function PlayerListEntry({ score, player, isLeader }: PlayerListEntryProps) {
+    return (
+        <div className={`${styles.playerEntry} ${isLeader ? styles.leader : ""}`}>
+            <Typography>
+                {player.name}
+            </Typography>
+            <Typography>
+                ${score}
+            </Typography>
+            <Typography className={styles.iconWithValue}>
+                <LocalActivityIcon
+                    fontSize="small"
+                    sx={{
+                        color: "var(--color-gold)",
+                    }}
+                />
+                {player.tokens}
+            </Typography>
+        </div>
+    );
 }
 
 type RoundResultsProps = {
+    mode: "roundResults" | "gameOver";
     title?: string;
     footer?: ReactNode;
+    onAdvance?: () => void;
 };
 
 // Round results, each player listed with their scores and token amounts
-export default function RoundResults({ title, footer }: RoundResultsProps) {
+export default function RoundResults({ mode = "roundResults", title, footer, onAdvance }: RoundResultsProps) {
     const players = useGameStore((s) => s.players);
     const round = useGameStore((s) => s.round);
-    const advanceRound = useGameStore((s) => s.advanceRound);
+    const prevRound = round - 1;
+
+    const getScore = (p: Player) => {
+        if (mode === "gameOver") {
+            return p.scoreRound1 + p.scoreRound2;
+        }
+        else {
+            if (prevRound === 1) return p.scoreRound1;
+            return p.scoreRound2;
+        }
+    }
 
     // Have to spread the players array as to not mutate the original
-    const sortedPlayers = [...players].sort((p1, p2) => p1.score - p2.score)
-    const topScore = Math.max(...players.map((p) => p.score));
+    const sortedPlayers = [...players].sort((p1, p2) => getScore(p2) - getScore(p1));
+
+    const topScore = Math.max(...players.map((p) => getScore(p)));
 
     return (
         <div className={styles.rays}>
             <div className={styles.pageHeader}>
                 <Typography variant="h5" style={{ fontFamily: "var(--font-jeopardy)" }}>
-                {title ?? `Round ${round} Results`}
+                {title ?? `Round ${round - 1} Results`}
                 </Typography>
             </div>
 
@@ -66,10 +80,10 @@ export default function RoundResults({ title, footer }: RoundResultsProps) {
 
                 {/* List of players and their scores */}
                 {sortedPlayers.map((p, idx) => (
-                    <PlayerListEntry key={idx} player={p} isLeader={topScore === p.score} />
+                    <PlayerListEntry key={idx} score={getScore(p)} player={p} isLeader={topScore === getScore(p)} />
                 ))}
 
-                {footer === undefined ? <Button onClick={advanceRound}>Next Round</Button> : footer}
+                {footer === undefined ? <Button onClick={onAdvance}>Next Round</Button> : footer}
             </Card>
         </div>
     );

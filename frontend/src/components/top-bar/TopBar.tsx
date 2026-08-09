@@ -16,6 +16,8 @@ export default function TopBar({
   currentRound,
   spinsLeft,
 }: TopBarProps) {
+    const currScore = (p: Player) => currentRound === 1 ? p.scoreRound1 : p.scoreRound2;
+
     return (
         <div className={styles.topBar}>
             <div className={styles.roundBadge}>
@@ -35,7 +37,7 @@ export default function TopBar({
                         </Typography>
                         <div className={styles.chipGroup}>
                             <Chip
-                            label={`Score: ${player.score}`}
+                            label={`Score: ${currScore(player)}`}
                             className={styles.scoreChip}
                             size="small"
                             />

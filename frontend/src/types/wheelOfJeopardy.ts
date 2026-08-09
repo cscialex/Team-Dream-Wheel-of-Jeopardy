@@ -20,7 +20,8 @@ export interface Cell {
 export interface Player {
 	id: number;
 	name: string;
-	score: number;
+	scoreRound1: number;
+	scoreRound2: number;
 	tokens: number;
 	socketId: string;
 }

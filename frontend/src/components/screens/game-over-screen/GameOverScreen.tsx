@@ -8,17 +8,13 @@ import Button from "@mui/material/Button";
 export default function GameOverScreen() {
     const players = useGameStore((s) => s.players);
     const { width, height } = useWindowSize();
+    const handlePlayAgain = useGameStore((s) => s.playAgain);
 
-
-    const topScore = Math.max(...players.map((p) => p.score));
+    const topScore = Math.max(...players.map((p) => p.scoreRound1 + p.scoreRound2));
     const winners = players
-        .filter((p) => p.score === topScore)
+        .filter((p) => (p.scoreRound1 + p.scoreRound2) === topScore)
         .map((p) => p.name)
         .join(", ");
-
-    const handlePlayAgain = () => {
-        // Should have a play again wiring in the backend
-    }
 
     const buttonFooter = (
         <Button onClick={handlePlayAgain}>
@@ -29,7 +25,7 @@ export default function GameOverScreen() {
     return (
         <>
             <Confetti width={width ?? undefined} height={height ?? undefined} />
-            <RoundResults title={`Game Over! ${winners} wins!`} footer={buttonFooter} />
+            <RoundResults mode={"gameOver"} title={`Game Over! ${winners} wins!`} footer={buttonFooter} />
         </>
     );
 }
